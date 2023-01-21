@@ -1,0 +1,4 @@
+{
+    "address": "localhost:53000",
+    "db_address": "postgres://localhost/mydb?sslmode=disable"
+} 
