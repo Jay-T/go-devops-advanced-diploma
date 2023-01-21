@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package go_devops_advanced_diploma;
+
+option go_package = "github.com/Jay-T/go-devops-advanced-diploma/internal/pb";
+
+import "auth.proto";
+
+
+service GophKeeper {
+    rpc UserSignIn(UserSignInRequest) returns (UserSignInResponse) {}
+    rpc UserSignUp(UserSignUpRequest) returns (UserSignUpResponse) {}
+}
