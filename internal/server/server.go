@@ -12,13 +12,11 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-var _ Server = (*GRPCServer)(nil)
+const (
+	secretKey = "secret_key"
+)
 
-type User struct {
-	Username string `json:"login"`
-	Password string `json:"password"`
-	Passhash string
-}
+var _ Server = (*GRPCServer)(nil)
 
 type GenericService struct {
 	Cfg *Config
@@ -41,7 +39,7 @@ type Server interface {
 }
 type GRPCServer struct {
 	*GenericService
-	pb.UnimplementedGophKeeperServer
+	pb.UnimplementedAnythingElseServer
 }
 
 func NewServer(ctx context.Context, cfg *Config) (Server, error) {
@@ -52,8 +50,14 @@ func NewServer(ctx context.Context, cfg *Config) (Server, error) {
 
 	return &GRPCServer{
 		genericService,
-		pb.UnimplementedGophKeeperServer{},
+		pb.UnimplementedAnythingElseServer{},
 	}, nil
+}
+func protectedMethods() map[string]bool {
+	const protectedServicePath = "/go_devops_advanced_diploma.AnythingElse/"
+	return map[string]bool{
+		protectedServicePath + "GetUserInfo": true,
+	}
 }
 
 func (s *GRPCServer) StartServer(ctx context.Context) {
@@ -62,17 +66,25 @@ func (s *GRPCServer) StartServer(ctx context.Context) {
 		log.Fatal().Err(err).Str("func", "StartServer")
 	}
 
-	// interceptors := []grpc.UnaryServerInterceptor{
-	// 	s.checkReqIDInterceptor,
-	// }
-	interceptors := []grpc.UnaryServerInterceptor{}
+	userStore := NewInMemoryUserStore()
+	err = seedUsers(userStore)
+	if err != nil {
+		log.Fatal().Msg("cannot seed users")
+	}
+	jwtManager := NewJWTManager(secretKey, s.Cfg.TokenLifeTime)
+	authServer := NewAuthServer(userStore, jwtManager)
+	interceptor := NewAuthInterceptor(jwtManager, protectedMethods())
 
-	server := grpc.NewServer(grpc.ChainUnaryInterceptor(interceptors...))
-	pb.RegisterGophKeeperServer(server, s)
+	anythingElseServer := NewAnythingElseServer()
+
+	server := grpc.NewServer(grpc.UnaryInterceptor(interceptor.Unary()))
+
+	pb.RegisterAnythingElseServer(server, anythingElseServer)
+	pb.RegisterAuthenticationServer(server, authServer)
 	reflection.Register(server)
 
 	go func() {
-		log.Info().Msg(fmt.Sprintf("Starting GRPC server on socket %s", s.Cfg.Address))
+		log.Info().Msg(fmt.Sprintf("Starting GRPC server with following config: %+v", s.Cfg))
 		if err := server.Serve(listen); err != nil {
 			log.Fatal().Err(err).Str("func", "StartServer")
 		}
@@ -89,18 +101,17 @@ func (s *GRPCServer) StopServer(ctx context.Context, cancel context.CancelFunc) 
 	os.Exit(1)
 }
 
-func (s *GRPCServer) UserSignIn(ctx context.Context, in *pb.UserSignInRequest) (*pb.UserSignInResponse, error) {
-	log.Info().Msg(fmt.Sprintf("Got SignIn request for login '%s', password '%s'", in.Login, in.Password))
+// type AuthServer struct {
+// 	pb.UnimplementedAuthenticationServer
+// 	tokenLifeTime time.Duration
+// }
 
-	return &pb.UserSignInResponse{
-		Token: "123456",
-	}, nil
-}
+// func NewAuthServer(ctx, tokenLifeTime time.Duration) (*AuthServer, error) {
+// 	return &AuthServer{
+// 		tokenLifeTime: tokenLifeTime,
+// 	}, nil
+// }
 
-func (s *GRPCServer) UserSignUp(ctx context.Context, in *pb.UserSignUpRequest) (*pb.UserSignUpResponse, error) {
-	log.Info().Msg(fmt.Sprintf("Got SignUp request for login '%s', password '%s'", in.Login, in.Password))
-
-	return &pb.UserSignUpResponse{
-		Token: "123456",
-	}, nil
-}
+// func (s *GRPCServer) GetUserInfo(ctx context.Context, in *pb.UserSignUpRequest) (*pb.UserSignUpResponse, error) {
+// 	return
+// }

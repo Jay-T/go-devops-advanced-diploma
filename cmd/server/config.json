@@ -1,4 +1,5 @@
 {
     "address": "localhost:53000",
-    "db_address": "postgres://localhost/mydb?sslmode=disable"
+    "db_address": "postgres://localhost/mydb?sslmode=disable",
+    "token_duration": "10s"
 } 

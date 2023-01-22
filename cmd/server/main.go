@@ -27,7 +27,7 @@ func main() {
 
 	s, err := server.NewServer(ctx, cfg)
 	if err != nil {
-		log.Fatal().Msg(fmt.Sprintf("Could not run GRPC server. Error: %s", err))
+		log.Fatal().Msg(fmt.Sprintf("Could not get server. Error: %s", err))
 	}
 
 	go s.StartServer(ctx)

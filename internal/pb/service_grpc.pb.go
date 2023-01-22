@@ -11,6 +11,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -18,122 +19,208 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// GophKeeperClient is the client API for GophKeeper service.
+// AuthenticationClient is the client API for Authentication service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type GophKeeperClient interface {
+type AuthenticationClient interface {
 	UserSignIn(ctx context.Context, in *UserSignInRequest, opts ...grpc.CallOption) (*UserSignInResponse, error)
 	UserSignUp(ctx context.Context, in *UserSignUpRequest, opts ...grpc.CallOption) (*UserSignUpResponse, error)
 }
 
-type gophKeeperClient struct {
+type authenticationClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewGophKeeperClient(cc grpc.ClientConnInterface) GophKeeperClient {
-	return &gophKeeperClient{cc}
+func NewAuthenticationClient(cc grpc.ClientConnInterface) AuthenticationClient {
+	return &authenticationClient{cc}
 }
 
-func (c *gophKeeperClient) UserSignIn(ctx context.Context, in *UserSignInRequest, opts ...grpc.CallOption) (*UserSignInResponse, error) {
+func (c *authenticationClient) UserSignIn(ctx context.Context, in *UserSignInRequest, opts ...grpc.CallOption) (*UserSignInResponse, error) {
 	out := new(UserSignInResponse)
-	err := c.cc.Invoke(ctx, "/go_devops_advanced_diploma.GophKeeper/UserSignIn", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/go_devops_advanced_diploma.Authentication/UserSignIn", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *gophKeeperClient) UserSignUp(ctx context.Context, in *UserSignUpRequest, opts ...grpc.CallOption) (*UserSignUpResponse, error) {
+func (c *authenticationClient) UserSignUp(ctx context.Context, in *UserSignUpRequest, opts ...grpc.CallOption) (*UserSignUpResponse, error) {
 	out := new(UserSignUpResponse)
-	err := c.cc.Invoke(ctx, "/go_devops_advanced_diploma.GophKeeper/UserSignUp", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/go_devops_advanced_diploma.Authentication/UserSignUp", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// GophKeeperServer is the server API for GophKeeper service.
-// All implementations must embed UnimplementedGophKeeperServer
+// AuthenticationServer is the server API for Authentication service.
+// All implementations must embed UnimplementedAuthenticationServer
 // for forward compatibility
-type GophKeeperServer interface {
+type AuthenticationServer interface {
 	UserSignIn(context.Context, *UserSignInRequest) (*UserSignInResponse, error)
 	UserSignUp(context.Context, *UserSignUpRequest) (*UserSignUpResponse, error)
-	mustEmbedUnimplementedGophKeeperServer()
+	mustEmbedUnimplementedAuthenticationServer()
 }
 
-// UnimplementedGophKeeperServer must be embedded to have forward compatible implementations.
-type UnimplementedGophKeeperServer struct {
+// UnimplementedAuthenticationServer must be embedded to have forward compatible implementations.
+type UnimplementedAuthenticationServer struct {
 }
 
-func (UnimplementedGophKeeperServer) UserSignIn(context.Context, *UserSignInRequest) (*UserSignInResponse, error) {
+func (UnimplementedAuthenticationServer) UserSignIn(context.Context, *UserSignInRequest) (*UserSignInResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UserSignIn not implemented")
 }
-func (UnimplementedGophKeeperServer) UserSignUp(context.Context, *UserSignUpRequest) (*UserSignUpResponse, error) {
+func (UnimplementedAuthenticationServer) UserSignUp(context.Context, *UserSignUpRequest) (*UserSignUpResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UserSignUp not implemented")
 }
-func (UnimplementedGophKeeperServer) mustEmbedUnimplementedGophKeeperServer() {}
+func (UnimplementedAuthenticationServer) mustEmbedUnimplementedAuthenticationServer() {}
 
-// UnsafeGophKeeperServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to GophKeeperServer will
+// UnsafeAuthenticationServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to AuthenticationServer will
 // result in compilation errors.
-type UnsafeGophKeeperServer interface {
-	mustEmbedUnimplementedGophKeeperServer()
+type UnsafeAuthenticationServer interface {
+	mustEmbedUnimplementedAuthenticationServer()
 }
 
-func RegisterGophKeeperServer(s grpc.ServiceRegistrar, srv GophKeeperServer) {
-	s.RegisterService(&GophKeeper_ServiceDesc, srv)
+func RegisterAuthenticationServer(s grpc.ServiceRegistrar, srv AuthenticationServer) {
+	s.RegisterService(&Authentication_ServiceDesc, srv)
 }
 
-func _GophKeeper_UserSignIn_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Authentication_UserSignIn_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UserSignInRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GophKeeperServer).UserSignIn(ctx, in)
+		return srv.(AuthenticationServer).UserSignIn(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/go_devops_advanced_diploma.GophKeeper/UserSignIn",
+		FullMethod: "/go_devops_advanced_diploma.Authentication/UserSignIn",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GophKeeperServer).UserSignIn(ctx, req.(*UserSignInRequest))
+		return srv.(AuthenticationServer).UserSignIn(ctx, req.(*UserSignInRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _GophKeeper_UserSignUp_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Authentication_UserSignUp_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UserSignUpRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GophKeeperServer).UserSignUp(ctx, in)
+		return srv.(AuthenticationServer).UserSignUp(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/go_devops_advanced_diploma.GophKeeper/UserSignUp",
+		FullMethod: "/go_devops_advanced_diploma.Authentication/UserSignUp",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GophKeeperServer).UserSignUp(ctx, req.(*UserSignUpRequest))
+		return srv.(AuthenticationServer).UserSignUp(ctx, req.(*UserSignUpRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// GophKeeper_ServiceDesc is the grpc.ServiceDesc for GophKeeper service.
+// Authentication_ServiceDesc is the grpc.ServiceDesc for Authentication service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var GophKeeper_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "go_devops_advanced_diploma.GophKeeper",
-	HandlerType: (*GophKeeperServer)(nil),
+var Authentication_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "go_devops_advanced_diploma.Authentication",
+	HandlerType: (*AuthenticationServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "UserSignIn",
-			Handler:    _GophKeeper_UserSignIn_Handler,
+			Handler:    _Authentication_UserSignIn_Handler,
 		},
 		{
 			MethodName: "UserSignUp",
-			Handler:    _GophKeeper_UserSignUp_Handler,
+			Handler:    _Authentication_UserSignUp_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "service.proto",
+}
+
+// AnythingElseClient is the client API for AnythingElse service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type AnythingElseClient interface {
+	GetUserInfo(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
+}
+
+type anythingElseClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewAnythingElseClient(cc grpc.ClientConnInterface) AnythingElseClient {
+	return &anythingElseClient{cc}
+}
+
+func (c *anythingElseClient) GetUserInfo(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, "/go_devops_advanced_diploma.AnythingElse/GetUserInfo", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// AnythingElseServer is the server API for AnythingElse service.
+// All implementations must embed UnimplementedAnythingElseServer
+// for forward compatibility
+type AnythingElseServer interface {
+	GetUserInfo(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
+	mustEmbedUnimplementedAnythingElseServer()
+}
+
+// UnimplementedAnythingElseServer must be embedded to have forward compatible implementations.
+type UnimplementedAnythingElseServer struct {
+}
+
+func (UnimplementedAnythingElseServer) GetUserInfo(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserInfo not implemented")
+}
+func (UnimplementedAnythingElseServer) mustEmbedUnimplementedAnythingElseServer() {}
+
+// UnsafeAnythingElseServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to AnythingElseServer will
+// result in compilation errors.
+type UnsafeAnythingElseServer interface {
+	mustEmbedUnimplementedAnythingElseServer()
+}
+
+func RegisterAnythingElseServer(s grpc.ServiceRegistrar, srv AnythingElseServer) {
+	s.RegisterService(&AnythingElse_ServiceDesc, srv)
+}
+
+func _AnythingElse_GetUserInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnythingElseServer).GetUserInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/go_devops_advanced_diploma.AnythingElse/GetUserInfo",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnythingElseServer).GetUserInfo(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// AnythingElse_ServiceDesc is the grpc.ServiceDesc for AnythingElse service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var AnythingElse_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "go_devops_advanced_diploma.AnythingElse",
+	HandlerType: (*AnythingElseServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetUserInfo",
+			Handler:    _AnythingElse_GetUserInfo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

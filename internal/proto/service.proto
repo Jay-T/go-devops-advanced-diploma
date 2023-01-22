@@ -5,9 +5,13 @@ package go_devops_advanced_diploma;
 option go_package = "github.com/Jay-T/go-devops-advanced-diploma/internal/pb";
 
 import "auth.proto";
+import "google/protobuf/empty.proto";
 
-
-service GophKeeper {
+service Authentication {
     rpc UserSignIn(UserSignInRequest) returns (UserSignInResponse) {}
     rpc UserSignUp(UserSignUpRequest) returns (UserSignUpResponse) {}
+}
+
+service AnythingElse {
+    rpc GetUserInfo(google.protobuf.Empty) returns (google.protobuf.Empty) {}
 }
