@@ -13,6 +13,9 @@ migrateup:
 migratedown:
 	migrate -path db/migration -database "postgresql://root:secret@localhost:5433/gophkeeper?sslmode=disable" -verbose down
 
+sqlc:
+	sqlc generate
+
 proto:
 	protoc --proto_path=internal/proto --go_out=internal/pb --go_opt=paths=source_relative \
 	--go-grpc_out=internal/pb --go-grpc_opt=paths=source_relative \
@@ -21,4 +24,4 @@ proto:
 server-run:
 	go run ./cmd/server/. -c ./cmd/server/config.json
 
-.PHONY: postgres createdb dropdb migrateup migratedown
+.PHONY: postgres createdb dropdb migrateup migratedown sqlc
