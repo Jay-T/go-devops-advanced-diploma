@@ -12,7 +12,7 @@ UPDATE account
   set blocked = true
 WHERE username = $1;
 
--- name: GetAuthor :one
+-- name: GetAccount :one
 SELECT * FROM account
 WHERE username = $1 LIMIT 1;
 

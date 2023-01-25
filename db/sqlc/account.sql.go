@@ -58,13 +58,13 @@ func (q *Queries) DeleteAccount(ctx context.Context, username string) error {
 	return err
 }
 
-const getAuthor = `-- name: GetAuthor :one
+const getAccount = `-- name: GetAccount :one
 SELECT id, username, passhash, blocked, created_at FROM account
 WHERE username = $1 LIMIT 1
 `
 
-func (q *Queries) GetAuthor(ctx context.Context, username string) (Account, error) {
-	row := q.db.QueryRowContext(ctx, getAuthor, username)
+func (q *Queries) GetAccount(ctx context.Context, username string) (Account, error) {
+	row := q.db.QueryRowContext(ctx, getAccount, username)
 	var i Account
 	err := row.Scan(
 		&i.ID,

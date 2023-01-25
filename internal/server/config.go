@@ -23,6 +23,7 @@ type Config struct {
 	DBAddress     string        `env:"DB_ADDRESS"`
 	ConfigFile    string        `env:"CONFIG"`
 	TokenLifeTime time.Duration `env:"TOKEN_DURATION"`
+	Environment   string        `env:"ENVIRONMENT"`
 }
 
 type ConfigFile struct {

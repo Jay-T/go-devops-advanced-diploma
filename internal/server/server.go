@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 
+	db "github.com/Jay-T/go-devops-advanced-diploma/db/sqlc"
 	pb "github.com/Jay-T/go-devops-advanced-diploma/internal/pb"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
@@ -39,10 +40,11 @@ type Server interface {
 }
 type GRPCServer struct {
 	*GenericService
+	store db.Store
 	pb.UnimplementedAnythingElseServer
 }
 
-func NewServer(ctx context.Context, cfg *Config) (Server, error) {
+func NewServer(ctx context.Context, cfg *Config, store db.Store) (Server, error) {
 	genericService, err := NewGenericServer(ctx, cfg)
 	if err != nil {
 		return nil, err
@@ -50,6 +52,7 @@ func NewServer(ctx context.Context, cfg *Config) (Server, error) {
 
 	return &GRPCServer{
 		genericService,
+		store,
 		pb.UnimplementedAnythingElseServer{},
 	}, nil
 }
