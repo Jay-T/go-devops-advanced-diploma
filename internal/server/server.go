@@ -69,13 +69,13 @@ func (s *GRPCServer) StartServer(ctx context.Context) {
 		log.Fatal().Err(err).Str("func", "StartServer")
 	}
 
-	userStore := NewInMemoryUserStore()
-	err = seedUsers(userStore)
+	// accountStore := NewInMemoryAccountStore()
+	// err = seedAccounts(accountStore)
 	if err != nil {
 		log.Fatal().Msg("cannot seed users")
 	}
 	jwtManager := NewJWTManager(secretKey, s.Cfg.TokenLifeTime)
-	authServer := NewAuthServer(userStore, jwtManager)
+	authServer := NewAuthServer(s.store, jwtManager)
 	interceptor := NewAuthInterceptor(jwtManager, protectedMethods())
 
 	anythingElseServer := NewAnythingElseServer()
@@ -103,18 +103,3 @@ func (s *GRPCServer) StopServer(ctx context.Context, cancel context.CancelFunc) 
 	log.Info().Msg("Canceled all goroutines.")
 	os.Exit(1)
 }
-
-// type AuthServer struct {
-// 	pb.UnimplementedAuthenticationServer
-// 	tokenLifeTime time.Duration
-// }
-
-// func NewAuthServer(ctx, tokenLifeTime time.Duration) (*AuthServer, error) {
-// 	return &AuthServer{
-// 		tokenLifeTime: tokenLifeTime,
-// 	}, nil
-// }
-
-// func (s *GRPCServer) GetUserInfo(ctx context.Context, in *pb.UserSignUpRequest) (*pb.UserSignUpResponse, error) {
-// 	return
-// }

@@ -81,7 +81,7 @@ func (interceptor *AuthInteceptor) scheduleRefreshToken(refreshDuration time.Dur
 }
 
 func (interceptor *AuthInteceptor) refreshToken() error {
-	token, err := interceptor.authClient.UserSignIn()
+	token, err := interceptor.authClient.Login()
 	if err != nil {
 		return nil
 	}

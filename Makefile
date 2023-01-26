@@ -27,4 +27,7 @@ proto:
 server-run:
 	ENVIRONMENT=development go run ./cmd/server/. -c ./cmd/server/config.json
 
-.PHONY: postgres createdb dropdb migrateup migratedown sqlc test
+client-run:
+	ENVIRONMENT=development go run ./cmd/client/.
+
+.PHONY: postgres createdb dropdb migrateup migratedown sqlc test client-run server-run

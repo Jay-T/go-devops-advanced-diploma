@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	db "github.com/Jay-T/go-devops-advanced-diploma/db/sqlc"
 	pb "github.com/Jay-T/go-devops-advanced-diploma/internal/pb"
+	"github.com/Jay-T/go-devops-advanced-diploma/internal/util"
+	"github.com/lib/pq"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -12,63 +15,68 @@ import (
 
 type AuthServer struct {
 	pb.UnimplementedAuthenticationServer
-	userStore  UserStore
-	jwtManager *JWTManager
+	accountStore db.Store
+	jwtManager   *JWTManager
 }
 
-func NewAuthServer(userStore UserStore, jwtManager *JWTManager) *AuthServer {
-	return &AuthServer{pb.UnimplementedAuthenticationServer{}, userStore, jwtManager}
+func NewAuthServer(store db.Store, jwtManager *JWTManager) *AuthServer {
+	return &AuthServer{pb.UnimplementedAuthenticationServer{}, store, jwtManager}
 }
 
-func (s *AuthServer) UserSignIn(ctx context.Context, in *pb.UserSignInRequest) (*pb.UserSignInResponse, error) {
+func (s *AuthServer) Login(ctx context.Context, in *pb.LoginRequest) (*pb.LoginResponse, error) {
 	log.Info().Msg(fmt.Sprintf("Got SignIn request for login '%s', password '%s'", in.Login, in.Password))
 
-	user, err := s.userStore.Find(in.Login)
+	acc, err := s.accountStore.GetAccount(ctx, in.Login)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot find user: %v", err)
 	}
 
-	if user == nil || !user.IsCorrectPassword(in.Password) {
+	if !acc.IsCorrectPassword(in.Password) {
 		return nil, status.Error(codes.NotFound, "username/password incorrect")
 	}
 
-	token, err := s.jwtManager.GeneratetToken(user)
+	token, err := s.jwtManager.GeneratetToken(&acc)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot generate access token")
 	}
 
-	res := &pb.UserSignInResponse{Token: token}
-	return res, nil
+	return &pb.LoginResponse{
+		Login: acc.Username,
+		Token: token,
+	}, nil
 }
 
-func (s *AuthServer) UserSignUp(ctx context.Context, in *pb.UserSignUpRequest) (*pb.UserSignUpResponse, error) {
+func (s *AuthServer) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.RegisterResponse, error) {
 	log.Info().Msg(fmt.Sprintf("Got SignUp request for login '%s', password '%s'", in.Login, in.Password))
 
-	// u := UserFromSignUpPB(in)
-	// err := u.registerNewUser(ctx)
-	// if err != nil {
-	// 	return nil, status.Error(codes.Internal, err.Error())
-	// }
-
-	// token, err := u.authenticateUser(ctx, s.tokenLifeTime)
-	// if err != nil {
-	// 	return nil, status.Error(codes.Internal, err.Error())
-	// }
-	user, err := s.userStore.Find(in.Login)
+	hash, err := util.HashPassword(in.Password)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot find user: %v", err)
+		return nil, status.Errorf(codes.Internal, "cannot hash password: %v", err)
 	}
 
-	if user == nil || !user.IsCorrectPassword(in.Password) {
-		return nil, status.Error(codes.NotFound, "username/password incorrect")
+	arg := db.CreateAccountParams{
+		Username: in.Login,
+		Passhash: hash,
 	}
 
-	token, err := s.jwtManager.GeneratetToken(user)
+	newAcc, err := s.accountStore.CreateAccount(ctx, arg)
+	if err != nil {
+		if pqErr, ok := err.(*pq.Error); ok {
+			switch pqErr.Code.Name() {
+			case "unique_violation":
+				return nil, status.Errorf(codes.AlreadyExists, "username already exists: %s", err)
+			}
+		}
+		return nil, status.Errorf(codes.Internal, "failed to create user: %s", err)
+	}
+
+	token, err := s.jwtManager.GeneratetToken(&newAcc)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot generate access token")
 	}
 
-	return &pb.UserSignUpResponse{
+	return &pb.RegisterResponse{
+		Login: newAcc.Username,
 		Token: token,
 	}, nil
 }

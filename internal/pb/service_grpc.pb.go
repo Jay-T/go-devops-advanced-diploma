@@ -23,8 +23,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthenticationClient interface {
-	UserSignIn(ctx context.Context, in *UserSignInRequest, opts ...grpc.CallOption) (*UserSignInResponse, error)
-	UserSignUp(ctx context.Context, in *UserSignUpRequest, opts ...grpc.CallOption) (*UserSignUpResponse, error)
+	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
+	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 }
 
 type authenticationClient struct {
@@ -35,18 +35,18 @@ func NewAuthenticationClient(cc grpc.ClientConnInterface) AuthenticationClient {
 	return &authenticationClient{cc}
 }
 
-func (c *authenticationClient) UserSignIn(ctx context.Context, in *UserSignInRequest, opts ...grpc.CallOption) (*UserSignInResponse, error) {
-	out := new(UserSignInResponse)
-	err := c.cc.Invoke(ctx, "/go_devops_advanced_diploma.Authentication/UserSignIn", in, out, opts...)
+func (c *authenticationClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error) {
+	out := new(LoginResponse)
+	err := c.cc.Invoke(ctx, "/go_devops_advanced_diploma.Authentication/Login", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *authenticationClient) UserSignUp(ctx context.Context, in *UserSignUpRequest, opts ...grpc.CallOption) (*UserSignUpResponse, error) {
-	out := new(UserSignUpResponse)
-	err := c.cc.Invoke(ctx, "/go_devops_advanced_diploma.Authentication/UserSignUp", in, out, opts...)
+func (c *authenticationClient) Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error) {
+	out := new(RegisterResponse)
+	err := c.cc.Invoke(ctx, "/go_devops_advanced_diploma.Authentication/Register", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -57,8 +57,8 @@ func (c *authenticationClient) UserSignUp(ctx context.Context, in *UserSignUpReq
 // All implementations must embed UnimplementedAuthenticationServer
 // for forward compatibility
 type AuthenticationServer interface {
-	UserSignIn(context.Context, *UserSignInRequest) (*UserSignInResponse, error)
-	UserSignUp(context.Context, *UserSignUpRequest) (*UserSignUpResponse, error)
+	Login(context.Context, *LoginRequest) (*LoginResponse, error)
+	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
 	mustEmbedUnimplementedAuthenticationServer()
 }
 
@@ -66,11 +66,11 @@ type AuthenticationServer interface {
 type UnimplementedAuthenticationServer struct {
 }
 
-func (UnimplementedAuthenticationServer) UserSignIn(context.Context, *UserSignInRequest) (*UserSignInResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UserSignIn not implemented")
+func (UnimplementedAuthenticationServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
 }
-func (UnimplementedAuthenticationServer) UserSignUp(context.Context, *UserSignUpRequest) (*UserSignUpResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UserSignUp not implemented")
+func (UnimplementedAuthenticationServer) Register(context.Context, *RegisterRequest) (*RegisterResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
 }
 func (UnimplementedAuthenticationServer) mustEmbedUnimplementedAuthenticationServer() {}
 
@@ -85,38 +85,38 @@ func RegisterAuthenticationServer(s grpc.ServiceRegistrar, srv AuthenticationSer
 	s.RegisterService(&Authentication_ServiceDesc, srv)
 }
 
-func _Authentication_UserSignIn_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UserSignInRequest)
+func _Authentication_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LoginRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthenticationServer).UserSignIn(ctx, in)
+		return srv.(AuthenticationServer).Login(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/go_devops_advanced_diploma.Authentication/UserSignIn",
+		FullMethod: "/go_devops_advanced_diploma.Authentication/Login",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthenticationServer).UserSignIn(ctx, req.(*UserSignInRequest))
+		return srv.(AuthenticationServer).Login(ctx, req.(*LoginRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Authentication_UserSignUp_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UserSignUpRequest)
+func _Authentication_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegisterRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthenticationServer).UserSignUp(ctx, in)
+		return srv.(AuthenticationServer).Register(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/go_devops_advanced_diploma.Authentication/UserSignUp",
+		FullMethod: "/go_devops_advanced_diploma.Authentication/Register",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthenticationServer).UserSignUp(ctx, req.(*UserSignUpRequest))
+		return srv.(AuthenticationServer).Register(ctx, req.(*RegisterRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -129,12 +129,12 @@ var Authentication_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*AuthenticationServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "UserSignIn",
-			Handler:    _Authentication_UserSignIn_Handler,
+			MethodName: "Login",
+			Handler:    _Authentication_Login_Handler,
 		},
 		{
-			MethodName: "UserSignUp",
-			Handler:    _Authentication_UserSignUp_Handler,
+			MethodName: "Register",
+			Handler:    _Authentication_Register_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

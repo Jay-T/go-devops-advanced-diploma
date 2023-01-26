@@ -8,8 +8,8 @@ import "auth.proto";
 import "google/protobuf/empty.proto";
 
 service Authentication {
-    rpc UserSignIn(UserSignInRequest) returns (UserSignInResponse) {}
-    rpc UserSignUp(UserSignUpRequest) returns (UserSignUpResponse) {}
+    rpc Login(LoginRequest) returns (LoginResponse) {}
+    rpc Register(RegisterRequest) returns (RegisterResponse) {}
 }
 
 service AnythingElse {

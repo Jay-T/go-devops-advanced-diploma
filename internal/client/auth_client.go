@@ -19,16 +19,16 @@ func NewAuthClient(cc *grpc.ClientConn, username string, password string) *AuthC
 	return &AuthClient{service, username, password}
 }
 
-func (client *AuthClient) UserSignIn() (string, error) {
+func (client *AuthClient) Login() (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	req := &pb.UserSignInRequest{
+	req := &pb.LoginRequest{
 		Login:    client.username,
 		Password: client.password,
 	}
 
-	res, err := client.service.UserSignIn(ctx, req)
+	res, err := client.service.Login(ctx, req)
 	if err != nil {
 		return "", err
 	}

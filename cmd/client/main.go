@@ -1,9 +1,11 @@
 package main
 
 import (
+	"os"
 	"time"
 
 	"github.com/Jay-T/go-devops-advanced-diploma/internal/client"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -32,6 +34,8 @@ func testClient(c *client.AnythingElseClient, duration time.Duration) {
 
 func main() {
 	serverAddress := "localhost:53000"
+
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
 	// cc1, err := grpc.Dial(serverAddress, grpc.WithInsecure())
 	cc1, err := grpc.Dial(serverAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))

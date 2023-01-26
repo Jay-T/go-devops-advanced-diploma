@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	db "github.com/Jay-T/go-devops-advanced-diploma/db/sqlc"
 	"github.com/dgrijalva/jwt-go"
 )
 
@@ -24,11 +25,11 @@ type Claims struct {
 	Username string `json:"username"`
 }
 
-func (manager *JWTManager) GeneratetToken(user *User) (string, error) {
+func (manager *JWTManager) GeneratetToken(acc *db.Account) (string, error) {
 	expirationTime := time.Now().Add(manager.tokenDuration)
 
 	claims := &Claims{
-		Username: user.Username,
+		Username: acc.Username,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expirationTime.Unix(),
 		},
