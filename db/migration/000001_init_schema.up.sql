@@ -43,11 +43,13 @@ CREATE INDEX ON "account" ("username");
 
 CREATE INDEX ON "secrets" ("key");
 
+CREATE UNIQUE INDEX ON "secrets" ("account_id", "key");
+
 CREATE INDEX ON "files" ("filename");
 
 CREATE INDEX ON "files" ("filepath");
 
-CREATE INDEX ON "files" ("filepath", "filename");
+CREATE UNIQUE INDEX ON "files" ("account_id", "filepath", "filename");
 
 COMMENT ON COLUMN "files"."ready" IS 'file ready or not for listing';
 

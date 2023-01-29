@@ -11,7 +11,6 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -141,88 +140,558 @@ var Authentication_ServiceDesc = grpc.ServiceDesc{
 	Metadata: "service.proto",
 }
 
-// AnythingElseClient is the client API for AnythingElse service.
+// SecretClient is the client API for Secret service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type AnythingElseClient interface {
-	GetUserInfo(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
+type SecretClient interface {
+	CreateSecret(ctx context.Context, in *CreateSecretRequest, opts ...grpc.CallOption) (*CreateSecretResponse, error)
+	UpdateSecret(ctx context.Context, in *UpdateSecretRequest, opts ...grpc.CallOption) (*UpdateSecretResponse, error)
+	DeleteSecret(ctx context.Context, in *DeleteSecretRequest, opts ...grpc.CallOption) (*DeleteSecretResponse, error)
+	GetSecret(ctx context.Context, in *GetSecretRequest, opts ...grpc.CallOption) (*GetSecretResponse, error)
+	ListSecret(ctx context.Context, in *ListSecretRequest, opts ...grpc.CallOption) (*ListSecretResponse, error)
 }
 
-type anythingElseClient struct {
+type secretClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewAnythingElseClient(cc grpc.ClientConnInterface) AnythingElseClient {
-	return &anythingElseClient{cc}
+func NewSecretClient(cc grpc.ClientConnInterface) SecretClient {
+	return &secretClient{cc}
 }
 
-func (c *anythingElseClient) GetUserInfo(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, "/go_devops_advanced_diploma.AnythingElse/GetUserInfo", in, out, opts...)
+func (c *secretClient) CreateSecret(ctx context.Context, in *CreateSecretRequest, opts ...grpc.CallOption) (*CreateSecretResponse, error) {
+	out := new(CreateSecretResponse)
+	err := c.cc.Invoke(ctx, "/go_devops_advanced_diploma.Secret/CreateSecret", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// AnythingElseServer is the server API for AnythingElse service.
-// All implementations must embed UnimplementedAnythingElseServer
+func (c *secretClient) UpdateSecret(ctx context.Context, in *UpdateSecretRequest, opts ...grpc.CallOption) (*UpdateSecretResponse, error) {
+	out := new(UpdateSecretResponse)
+	err := c.cc.Invoke(ctx, "/go_devops_advanced_diploma.Secret/UpdateSecret", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *secretClient) DeleteSecret(ctx context.Context, in *DeleteSecretRequest, opts ...grpc.CallOption) (*DeleteSecretResponse, error) {
+	out := new(DeleteSecretResponse)
+	err := c.cc.Invoke(ctx, "/go_devops_advanced_diploma.Secret/DeleteSecret", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *secretClient) GetSecret(ctx context.Context, in *GetSecretRequest, opts ...grpc.CallOption) (*GetSecretResponse, error) {
+	out := new(GetSecretResponse)
+	err := c.cc.Invoke(ctx, "/go_devops_advanced_diploma.Secret/GetSecret", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *secretClient) ListSecret(ctx context.Context, in *ListSecretRequest, opts ...grpc.CallOption) (*ListSecretResponse, error) {
+	out := new(ListSecretResponse)
+	err := c.cc.Invoke(ctx, "/go_devops_advanced_diploma.Secret/ListSecret", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// SecretServer is the server API for Secret service.
+// All implementations must embed UnimplementedSecretServer
 // for forward compatibility
-type AnythingElseServer interface {
-	GetUserInfo(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
-	mustEmbedUnimplementedAnythingElseServer()
+type SecretServer interface {
+	CreateSecret(context.Context, *CreateSecretRequest) (*CreateSecretResponse, error)
+	UpdateSecret(context.Context, *UpdateSecretRequest) (*UpdateSecretResponse, error)
+	DeleteSecret(context.Context, *DeleteSecretRequest) (*DeleteSecretResponse, error)
+	GetSecret(context.Context, *GetSecretRequest) (*GetSecretResponse, error)
+	ListSecret(context.Context, *ListSecretRequest) (*ListSecretResponse, error)
+	mustEmbedUnimplementedSecretServer()
 }
 
-// UnimplementedAnythingElseServer must be embedded to have forward compatible implementations.
-type UnimplementedAnythingElseServer struct {
+// UnimplementedSecretServer must be embedded to have forward compatible implementations.
+type UnimplementedSecretServer struct {
 }
 
-func (UnimplementedAnythingElseServer) GetUserInfo(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUserInfo not implemented")
+func (UnimplementedSecretServer) CreateSecret(context.Context, *CreateSecretRequest) (*CreateSecretResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateSecret not implemented")
 }
-func (UnimplementedAnythingElseServer) mustEmbedUnimplementedAnythingElseServer() {}
+func (UnimplementedSecretServer) UpdateSecret(context.Context, *UpdateSecretRequest) (*UpdateSecretResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateSecret not implemented")
+}
+func (UnimplementedSecretServer) DeleteSecret(context.Context, *DeleteSecretRequest) (*DeleteSecretResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteSecret not implemented")
+}
+func (UnimplementedSecretServer) GetSecret(context.Context, *GetSecretRequest) (*GetSecretResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSecret not implemented")
+}
+func (UnimplementedSecretServer) ListSecret(context.Context, *ListSecretRequest) (*ListSecretResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListSecret not implemented")
+}
+func (UnimplementedSecretServer) mustEmbedUnimplementedSecretServer() {}
 
-// UnsafeAnythingElseServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to AnythingElseServer will
+// UnsafeSecretServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to SecretServer will
 // result in compilation errors.
-type UnsafeAnythingElseServer interface {
-	mustEmbedUnimplementedAnythingElseServer()
+type UnsafeSecretServer interface {
+	mustEmbedUnimplementedSecretServer()
 }
 
-func RegisterAnythingElseServer(s grpc.ServiceRegistrar, srv AnythingElseServer) {
-	s.RegisterService(&AnythingElse_ServiceDesc, srv)
+func RegisterSecretServer(s grpc.ServiceRegistrar, srv SecretServer) {
+	s.RegisterService(&Secret_ServiceDesc, srv)
 }
 
-func _AnythingElse_GetUserInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
+func _Secret_CreateSecret_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateSecretRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AnythingElseServer).GetUserInfo(ctx, in)
+		return srv.(SecretServer).CreateSecret(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/go_devops_advanced_diploma.AnythingElse/GetUserInfo",
+		FullMethod: "/go_devops_advanced_diploma.Secret/CreateSecret",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AnythingElseServer).GetUserInfo(ctx, req.(*emptypb.Empty))
+		return srv.(SecretServer).CreateSecret(ctx, req.(*CreateSecretRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// AnythingElse_ServiceDesc is the grpc.ServiceDesc for AnythingElse service.
+func _Secret_UpdateSecret_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateSecretRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SecretServer).UpdateSecret(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/go_devops_advanced_diploma.Secret/UpdateSecret",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SecretServer).UpdateSecret(ctx, req.(*UpdateSecretRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Secret_DeleteSecret_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteSecretRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SecretServer).DeleteSecret(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/go_devops_advanced_diploma.Secret/DeleteSecret",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SecretServer).DeleteSecret(ctx, req.(*DeleteSecretRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Secret_GetSecret_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSecretRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SecretServer).GetSecret(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/go_devops_advanced_diploma.Secret/GetSecret",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SecretServer).GetSecret(ctx, req.(*GetSecretRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Secret_ListSecret_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListSecretRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SecretServer).ListSecret(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/go_devops_advanced_diploma.Secret/ListSecret",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SecretServer).ListSecret(ctx, req.(*ListSecretRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// Secret_ServiceDesc is the grpc.ServiceDesc for Secret service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var AnythingElse_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "go_devops_advanced_diploma.AnythingElse",
-	HandlerType: (*AnythingElseServer)(nil),
+var Secret_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "go_devops_advanced_diploma.Secret",
+	HandlerType: (*SecretServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetUserInfo",
-			Handler:    _AnythingElse_GetUserInfo_Handler,
+			MethodName: "CreateSecret",
+			Handler:    _Secret_CreateSecret_Handler,
+		},
+		{
+			MethodName: "UpdateSecret",
+			Handler:    _Secret_UpdateSecret_Handler,
+		},
+		{
+			MethodName: "DeleteSecret",
+			Handler:    _Secret_DeleteSecret_Handler,
+		},
+		{
+			MethodName: "GetSecret",
+			Handler:    _Secret_GetSecret_Handler,
+		},
+		{
+			MethodName: "ListSecret",
+			Handler:    _Secret_ListSecret_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
+	Metadata: "service.proto",
+}
+
+// FileClient is the client API for File service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type FileClient interface {
+	CreateFile(ctx context.Context, opts ...grpc.CallOption) (File_CreateFileClient, error)
+	UpdateFile(ctx context.Context, opts ...grpc.CallOption) (File_UpdateFileClient, error)
+	DeleteFile(ctx context.Context, in *DeleteFileRequest, opts ...grpc.CallOption) (*DeleteFileResponse, error)
+	GetFile(ctx context.Context, in *GetFileRequest, opts ...grpc.CallOption) (File_GetFileClient, error)
+	ListFile(ctx context.Context, in *ListFileRequest, opts ...grpc.CallOption) (*ListFileResponse, error)
+}
+
+type fileClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewFileClient(cc grpc.ClientConnInterface) FileClient {
+	return &fileClient{cc}
+}
+
+func (c *fileClient) CreateFile(ctx context.Context, opts ...grpc.CallOption) (File_CreateFileClient, error) {
+	stream, err := c.cc.NewStream(ctx, &File_ServiceDesc.Streams[0], "/go_devops_advanced_diploma.File/CreateFile", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &fileCreateFileClient{stream}
+	return x, nil
+}
+
+type File_CreateFileClient interface {
+	Send(*CreateFileRequest) error
+	CloseAndRecv() (*CreateFileResponse, error)
+	grpc.ClientStream
+}
+
+type fileCreateFileClient struct {
+	grpc.ClientStream
+}
+
+func (x *fileCreateFileClient) Send(m *CreateFileRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *fileCreateFileClient) CloseAndRecv() (*CreateFileResponse, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(CreateFileResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *fileClient) UpdateFile(ctx context.Context, opts ...grpc.CallOption) (File_UpdateFileClient, error) {
+	stream, err := c.cc.NewStream(ctx, &File_ServiceDesc.Streams[1], "/go_devops_advanced_diploma.File/UpdateFile", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &fileUpdateFileClient{stream}
+	return x, nil
+}
+
+type File_UpdateFileClient interface {
+	Send(*UpdateFileRequest) error
+	CloseAndRecv() (*UpdateFileResponse, error)
+	grpc.ClientStream
+}
+
+type fileUpdateFileClient struct {
+	grpc.ClientStream
+}
+
+func (x *fileUpdateFileClient) Send(m *UpdateFileRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *fileUpdateFileClient) CloseAndRecv() (*UpdateFileResponse, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(UpdateFileResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *fileClient) DeleteFile(ctx context.Context, in *DeleteFileRequest, opts ...grpc.CallOption) (*DeleteFileResponse, error) {
+	out := new(DeleteFileResponse)
+	err := c.cc.Invoke(ctx, "/go_devops_advanced_diploma.File/DeleteFile", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fileClient) GetFile(ctx context.Context, in *GetFileRequest, opts ...grpc.CallOption) (File_GetFileClient, error) {
+	stream, err := c.cc.NewStream(ctx, &File_ServiceDesc.Streams[2], "/go_devops_advanced_diploma.File/GetFile", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &fileGetFileClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type File_GetFileClient interface {
+	Recv() (*GetFileResponse, error)
+	grpc.ClientStream
+}
+
+type fileGetFileClient struct {
+	grpc.ClientStream
+}
+
+func (x *fileGetFileClient) Recv() (*GetFileResponse, error) {
+	m := new(GetFileResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *fileClient) ListFile(ctx context.Context, in *ListFileRequest, opts ...grpc.CallOption) (*ListFileResponse, error) {
+	out := new(ListFileResponse)
+	err := c.cc.Invoke(ctx, "/go_devops_advanced_diploma.File/ListFile", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// FileServer is the server API for File service.
+// All implementations must embed UnimplementedFileServer
+// for forward compatibility
+type FileServer interface {
+	CreateFile(File_CreateFileServer) error
+	UpdateFile(File_UpdateFileServer) error
+	DeleteFile(context.Context, *DeleteFileRequest) (*DeleteFileResponse, error)
+	GetFile(*GetFileRequest, File_GetFileServer) error
+	ListFile(context.Context, *ListFileRequest) (*ListFileResponse, error)
+	mustEmbedUnimplementedFileServer()
+}
+
+// UnimplementedFileServer must be embedded to have forward compatible implementations.
+type UnimplementedFileServer struct {
+}
+
+func (UnimplementedFileServer) CreateFile(File_CreateFileServer) error {
+	return status.Errorf(codes.Unimplemented, "method CreateFile not implemented")
+}
+func (UnimplementedFileServer) UpdateFile(File_UpdateFileServer) error {
+	return status.Errorf(codes.Unimplemented, "method UpdateFile not implemented")
+}
+func (UnimplementedFileServer) DeleteFile(context.Context, *DeleteFileRequest) (*DeleteFileResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteFile not implemented")
+}
+func (UnimplementedFileServer) GetFile(*GetFileRequest, File_GetFileServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetFile not implemented")
+}
+func (UnimplementedFileServer) ListFile(context.Context, *ListFileRequest) (*ListFileResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListFile not implemented")
+}
+func (UnimplementedFileServer) mustEmbedUnimplementedFileServer() {}
+
+// UnsafeFileServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to FileServer will
+// result in compilation errors.
+type UnsafeFileServer interface {
+	mustEmbedUnimplementedFileServer()
+}
+
+func RegisterFileServer(s grpc.ServiceRegistrar, srv FileServer) {
+	s.RegisterService(&File_ServiceDesc, srv)
+}
+
+func _File_CreateFile_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(FileServer).CreateFile(&fileCreateFileServer{stream})
+}
+
+type File_CreateFileServer interface {
+	SendAndClose(*CreateFileResponse) error
+	Recv() (*CreateFileRequest, error)
+	grpc.ServerStream
+}
+
+type fileCreateFileServer struct {
+	grpc.ServerStream
+}
+
+func (x *fileCreateFileServer) SendAndClose(m *CreateFileResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *fileCreateFileServer) Recv() (*CreateFileRequest, error) {
+	m := new(CreateFileRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _File_UpdateFile_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(FileServer).UpdateFile(&fileUpdateFileServer{stream})
+}
+
+type File_UpdateFileServer interface {
+	SendAndClose(*UpdateFileResponse) error
+	Recv() (*UpdateFileRequest, error)
+	grpc.ServerStream
+}
+
+type fileUpdateFileServer struct {
+	grpc.ServerStream
+}
+
+func (x *fileUpdateFileServer) SendAndClose(m *UpdateFileResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *fileUpdateFileServer) Recv() (*UpdateFileRequest, error) {
+	m := new(UpdateFileRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _File_DeleteFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteFileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileServer).DeleteFile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/go_devops_advanced_diploma.File/DeleteFile",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileServer).DeleteFile(ctx, req.(*DeleteFileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _File_GetFile_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetFileRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(FileServer).GetFile(m, &fileGetFileServer{stream})
+}
+
+type File_GetFileServer interface {
+	Send(*GetFileResponse) error
+	grpc.ServerStream
+}
+
+type fileGetFileServer struct {
+	grpc.ServerStream
+}
+
+func (x *fileGetFileServer) Send(m *GetFileResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _File_ListFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListFileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileServer).ListFile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/go_devops_advanced_diploma.File/ListFile",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileServer).ListFile(ctx, req.(*ListFileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// File_ServiceDesc is the grpc.ServiceDesc for File service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var File_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "go_devops_advanced_diploma.File",
+	HandlerType: (*FileServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "DeleteFile",
+			Handler:    _File_DeleteFile_Handler,
+		},
+		{
+			MethodName: "ListFile",
+			Handler:    _File_ListFile_Handler,
+		},
+	},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "CreateFile",
+			Handler:       _File_CreateFile_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "UpdateFile",
+			Handler:       _File_UpdateFile_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "GetFile",
+			Handler:       _File_GetFile_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "service.proto",
 }

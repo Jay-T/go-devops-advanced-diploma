@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package go_devops_advanced_diploma;
+
+option go_package = "github.com/Jay-T/go-devops-advanced-diploma/internal/pb";
+
+message FileInfo {
+    string filepath = 1;
+    string filename = 2;
+    optional bool ready = 3;
+}
+
+message CreateFileRequest {
+    oneof data {
+        FileInfo info = 1;
+        bytes chunk_data = 2;
+    };
+}
+
+message CreateFileResponse {
+    FileInfo info = 1;
+    uint32 size = 2;
+}
+
+message UpdateFileRequest {
+    oneof data {
+        FileInfo info = 1;
+        bytes chunk_data = 2;
+    };
+}
+
+message UpdateFileResponse {
+    FileInfo info = 1;
+}
+
+message DeleteFileRequest {
+    FileInfo info = 1;
+}
+
+message DeleteFileResponse {
+    FileInfo info = 1;
+}
+
+message GetFileRequest {
+    FileInfo key = 1;
+}
+
+message GetFileResponse {
+    oneof data {
+        FileInfo info = 1;
+        bytes chunk_data = 2;
+    };
+}
+
+message ListFileRequest {
+    FileInfo info = 1;
+}
+
+message ListFileResponse {
+    repeated FileInfo info = 1;
+}

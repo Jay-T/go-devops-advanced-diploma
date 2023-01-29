@@ -11,6 +11,15 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+type serverStream struct {
+	grpc.ServerStream
+	ctx context.Context
+}
+
+func (s *serverStream) Context() context.Context {
+	return s.ctx
+}
+
 type AuthInteceptor struct {
 	jwtManager       *JWTManager
 	protectedMethods map[string]bool
@@ -29,7 +38,7 @@ func (interceptor *AuthInteceptor) Unary() grpc.UnaryServerInterceptor {
 	) (interface{}, error) {
 		log.Info().Msg(fmt.Sprint("---> unary interceptor  ", info.FullMethod))
 
-		err := interceptor.authorize(ctx, info.FullMethod)
+		ctx, err := interceptor.authorize(ctx, info.FullMethod)
 		if err != nil {
 			return nil, err
 		}
@@ -38,29 +47,50 @@ func (interceptor *AuthInteceptor) Unary() grpc.UnaryServerInterceptor {
 	}
 }
 
-func (interceptor *AuthInteceptor) authorize(ctx context.Context, method string) error {
+func (interceptor *AuthInteceptor) Stream() grpc.StreamServerInterceptor {
+	return func(
+		srv interface{},
+		stream grpc.ServerStream,
+		info *grpc.StreamServerInfo,
+		handler grpc.StreamHandler,
+	) error {
+		log.Info().Msg(fmt.Sprint("---> stream interceptor  ", info.FullMethod))
+
+		ctx, err := interceptor.authorize(stream.Context(), info.FullMethod)
+		if err != nil {
+			return err
+		}
+
+		return handler(srv, &serverStream{stream, ctx})
+	}
+}
+
+func (interceptor *AuthInteceptor) authorize(ctx context.Context, method string) (context.Context, error) {
 	_, ok := interceptor.protectedMethods[method]
 
 	if !ok {
-		return nil
+		return ctx, nil
 	}
 
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return status.Errorf(codes.Unauthenticated, "metadata is not provided")
+		return ctx, status.Errorf(codes.Unauthenticated, "metadata is not provided")
 	}
 
 	values := md["authorization"]
 	if len(values) == 0 {
-		return status.Errorf(codes.Unauthenticated, "authorization token is not provided")
+		return ctx, status.Errorf(codes.Unauthenticated, "authorization token is not provided")
 	}
 
 	accessToken := values[0]
-	_, err := interceptor.jwtManager.Verify(accessToken)
+	claims, err := interceptor.jwtManager.Verify(accessToken)
 	if err != nil {
-		return status.Errorf(codes.Unauthenticated, "access token is invalid: %v", err)
+		return ctx, status.Errorf(codes.Unauthenticated, "access token is invalid: %v", err)
 	}
 
-	log.Info().Msg(fmt.Sprintf("Request authorized for %s", method))
-	return nil
+	md.Append("username", claims.Username)
+	ctx = metadata.NewIncomingContext(ctx, md)
+
+	log.Info().Msgf("Request authorized for method: %s, user: %s", method, claims.Username)
+	return ctx, nil
 }

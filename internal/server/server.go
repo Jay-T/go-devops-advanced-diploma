@@ -41,7 +41,6 @@ type Server interface {
 type GRPCServer struct {
 	*GenericService
 	store db.Store
-	pb.UnimplementedAnythingElseServer
 }
 
 func NewServer(ctx context.Context, cfg *Config, store db.Store) (Server, error) {
@@ -53,13 +52,24 @@ func NewServer(ctx context.Context, cfg *Config, store db.Store) (Server, error)
 	return &GRPCServer{
 		genericService,
 		store,
-		pb.UnimplementedAnythingElseServer{},
 	}, nil
 }
 func protectedMethods() map[string]bool {
-	const protectedServicePath = "/go_devops_advanced_diploma.AnythingElse/"
+	const (
+		protectedSecretServicePath = "/go_devops_advanced_diploma.Secret/"
+		protectedFileServicePath   = "/go_devops_advanced_diploma.File/"
+	)
 	return map[string]bool{
-		protectedServicePath + "GetUserInfo": true,
+		protectedSecretServicePath + "CreateSecret": true,
+		protectedSecretServicePath + "DeleteSecret": true,
+		protectedSecretServicePath + "GetSecret":    true,
+		protectedSecretServicePath + "ListSecret":   true,
+		protectedSecretServicePath + "UpdateSecret": true,
+		protectedFileServicePath + "CreateFile":     true,
+		protectedFileServicePath + "DeleteFile":     true,
+		protectedFileServicePath + "GetFile":        true,
+		protectedFileServicePath + "ListFile":       true,
+		protectedFileServicePath + "UpdateFile":     true,
 	}
 }
 
@@ -78,11 +88,17 @@ func (s *GRPCServer) StartServer(ctx context.Context) {
 	authServer := NewAuthServer(s.store, jwtManager)
 	interceptor := NewAuthInterceptor(jwtManager, protectedMethods())
 
-	anythingElseServer := NewAnythingElseServer()
+	secretServer := NewSecretServer(s.store)
+	fileServer := NewFileServer(s.store)
 
-	server := grpc.NewServer(grpc.UnaryInterceptor(interceptor.Unary()))
+	serverOptions := []grpc.ServerOption{
+		grpc.UnaryInterceptor(interceptor.Unary()),
+		grpc.StreamInterceptor(interceptor.Stream()),
+	}
+	server := grpc.NewServer(serverOptions...)
 
-	pb.RegisterAnythingElseServer(server, anythingElseServer)
+	pb.RegisterSecretServer(server, secretServer)
+	pb.RegisterFileServer(server, fileServer)
 	pb.RegisterAuthenticationServer(server, authServer)
 	reflection.Register(server)
 
