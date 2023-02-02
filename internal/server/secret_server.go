@@ -5,6 +5,7 @@ import (
 	"database/sql"
 
 	db "github.com/Jay-T/go-devops-advanced-diploma/db/sqlc"
+	"github.com/Jay-T/go-devops-advanced-diploma/internal/crypto"
 	"github.com/Jay-T/go-devops-advanced-diploma/internal/pb"
 	"github.com/lib/pq"
 	"github.com/rs/zerolog/log"
@@ -12,6 +13,20 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
+
+func (s *SecretServer) findAccount(ctx context.Context) (db.Account, error) {
+	username, err := getUsernameFromContext(ctx)
+	if err != nil {
+		return db.Account{}, err
+	}
+
+	account, err := s.secretStore.GetAccount(ctx, username)
+	if err != nil {
+		return db.Account{}, logError(status.Errorf(codes.Internal, "cannot get account from db. Err :%s", err))
+	}
+
+	return account, nil
+}
 
 func getUsernameFromContext(ctx context.Context) (string, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
@@ -29,32 +44,34 @@ func getUsernameFromContext(ctx context.Context) (string, error) {
 
 type SecretServer struct {
 	secretStore db.Store
+	crypto      *crypto.CryptoService
 	pb.UnimplementedSecretServer
 }
 
-func NewSecretServer(secretStore db.Store) *SecretServer {
-	return &SecretServer{secretStore, pb.UnimplementedSecretServer{}}
+func NewSecretServer(secretStore db.Store, CS *crypto.CryptoService) *SecretServer {
+	return &SecretServer{
+		secretStore,
+		CS,
+		pb.UnimplementedSecretServer{},
+	}
 }
 
 func (s *SecretServer) CreateSecret(ctx context.Context, in *pb.CreateSecretRequest) (*pb.CreateSecretResponse, error) {
-	username, err := getUsernameFromContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Info().Msgf("Got CreateSecret request for login '%s'", username)
-
-	account, err := s.secretStore.GetAccount(ctx, username)
+	account, err := s.findAccount(ctx)
 	if err != nil {
 		return nil, logError(status.Errorf(codes.Internal, "cannot get account from db. Err :%s", err))
 	}
 
-	// TODO(): ADD VALUE ENCRYPTION HERE!
+	log.Info().Msgf("Got CreateSecret request for login '%s'", account.Username)
+	cipher, err := s.crypto.Encrypt(in.Data.Value)
+	if err != nil {
+		return nil, logError(status.Errorf(codes.Internal, "cannot encrypt the secret. Err :%s", err))
+	}
 
 	arg := db.CreateSecretParams{
 		AccountID: account.ID,
 		Key:       in.Data.Key,
-		Value:     in.Data.Value,
+		Value:     cipher,
 	}
 
 	secret, err := s.secretStore.CreateSecret(ctx, arg)
@@ -70,7 +87,7 @@ func (s *SecretServer) CreateSecret(ctx context.Context, in *pb.CreateSecretRequ
 
 	message := &pb.SecretMessage{
 		Key:   secret.Key,
-		Value: secret.Value,
+		Value: string(secret.Value),
 	}
 
 	return &pb.CreateSecretResponse{
@@ -78,22 +95,13 @@ func (s *SecretServer) CreateSecret(ctx context.Context, in *pb.CreateSecretRequ
 	}, nil
 }
 
-func (s *SecretServer) UpdateSecret(context.Context, *pb.UpdateSecretRequest) (*pb.UpdateSecretResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "Uninmplemented")
-}
-
 func (s *SecretServer) DeleteSecret(ctx context.Context, in *pb.DeleteSecretRequest) (*pb.DeleteSecretResponse, error) {
-	username, err := getUsernameFromContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	account, err := s.secretStore.GetAccount(ctx, username)
+	account, err := s.findAccount(ctx)
 	if err != nil {
 		return nil, logError(status.Errorf(codes.Internal, "cannot get account from db. Err :%s", err))
 	}
 
-	log.Info().Msgf("Got DeleteSecret request for login '%s'", username)
+	log.Info().Msgf("Got DeleteSecret request for login '%s'", account.Username)
 
 	arg := db.GetSecretParams{
 		Key:       in.Key,
@@ -123,10 +131,75 @@ func (s *SecretServer) DeleteSecret(ctx context.Context, in *pb.DeleteSecretRequ
 	}, nil
 }
 
-func (s *SecretServer) GetSecret(context.Context, *pb.GetSecretRequest) (*pb.GetSecretResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "Uninmplemented")
+func (s *SecretServer) GetSecret(ctx context.Context, in *pb.GetSecretRequest) (*pb.GetSecretResponse, error) {
+	account, err := s.findAccount(ctx)
+	if err != nil {
+		return nil, logError(status.Errorf(codes.Internal, "cannot get account from db. Err :%s", err))
+	}
+
+	log.Info().Msgf("Got GetSecret request for login '%s'", account.Username)
+
+	arg := db.GetSecretParams{
+		Key:       in.Key,
+		AccountID: account.ID,
+	}
+
+	secret, err := s.secretStore.GetSecret(ctx, arg)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, logError(status.Error(codes.NotFound, "cannot find secret"))
+		}
+
+		return nil, logError(status.Errorf(codes.Internal, "cannot get secret: Err: %s", err))
+	}
+
+	decipher, err := s.crypto.Decrypt(secret.Value)
+	if err != nil {
+		return nil, logError(status.Errorf(codes.Internal, "cannot decrypt the secret. Err :%s", err))
+	}
+
+	secretMSG := &pb.SecretMessage{
+		Key:   secret.Key,
+		Value: decipher,
+	}
+
+	return &pb.GetSecretResponse{
+		Data: secretMSG,
+	}, nil
 }
 
-func (s *SecretServer) ListSecret(context.Context, *pb.ListSecretRequest) (*pb.ListSecretResponse, error) {
+func (s *SecretServer) ListSecret(ctx context.Context, in *pb.ListSecretRequest) (*pb.ListSecretResponse, error) {
+	account, err := s.findAccount(ctx)
+	if err != nil {
+		return nil, logError(status.Errorf(codes.Internal, "cannot get account from db. Err :%s", err))
+	}
+
+	log.Info().Msgf("Got ListSecret request for login '%s'", account.Username)
+
+	secrets, err := s.secretStore.ListSecrets(ctx, account.ID)
+	if err != nil {
+		return nil, logError(status.Errorf(codes.Internal, "cannot get secrets from db. Err :%s", err))
+	}
+
+	secretsList := []*pb.SecretMessage{}
+
+	for _, i := range secrets {
+		decipher, err := s.crypto.Decrypt(i.Value)
+		if err != nil {
+			return nil, logError(status.Errorf(codes.Internal, "cannot decrypt the secret. Err :%s", err))
+		}
+
+		secretsList = append(secretsList, &pb.SecretMessage{
+			Key:   i.Key,
+			Value: decipher,
+		})
+	}
+
+	return &pb.ListSecretResponse{
+		Data: secretsList,
+	}, nil
+}
+
+func (s *SecretServer) UpdateSecret(context.Context, *pb.UpdateSecretRequest) (*pb.UpdateSecretResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "Uninmplemented")
 }

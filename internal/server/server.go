@@ -7,6 +7,7 @@ import (
 	"os"
 
 	db "github.com/Jay-T/go-devops-advanced-diploma/db/sqlc"
+	"github.com/Jay-T/go-devops-advanced-diploma/internal/crypto"
 	pb "github.com/Jay-T/go-devops-advanced-diploma/internal/pb"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
@@ -15,14 +16,13 @@ import (
 
 const (
 	secretKey = "secret_key"
+	cypherKey = "VeryStrongKey"
 )
 
 var _ Server = (*GRPCServer)(nil)
 
 type GenericService struct {
 	Cfg *Config
-	// Encryptor     *Eecryptor
-	// Decryptor     *Decryptor
 	// backuper      StorageBackuper
 }
 
@@ -30,7 +30,6 @@ func NewGenericServer(ctx context.Context, cfg *Config) (*GenericService, error)
 	var s GenericService
 
 	s.Cfg = cfg
-
 	return &s, nil
 }
 
@@ -87,8 +86,9 @@ func (s *GRPCServer) StartServer(ctx context.Context) {
 	jwtManager := NewJWTManager(secretKey, s.Cfg.TokenLifeTime)
 	authServer := NewAuthServer(s.store, jwtManager)
 	interceptor := NewAuthInterceptor(jwtManager, protectedMethods())
+	cryptoService := crypto.NewCryptoService(cypherKey)
 
-	secretServer := NewSecretServer(s.store)
+	secretServer := NewSecretServer(s.store, cryptoService)
 	fileServer := NewFileServer(s.store)
 
 	serverOptions := []grpc.ServerOption{
