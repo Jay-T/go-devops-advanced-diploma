@@ -63,6 +63,7 @@ func (s *SecretServer) CreateSecret(ctx context.Context, in *pb.CreateSecretRequ
 	}
 
 	log.Info().Msgf("Got CreateSecret request for login '%s'", account.Username)
+
 	cipher, err := s.crypto.Encrypt(in.Data.Value)
 	if err != nil {
 		return nil, logError(status.Errorf(codes.Internal, "cannot encrypt the secret. Err :%s", err))
@@ -200,6 +201,32 @@ func (s *SecretServer) ListSecret(ctx context.Context, in *pb.ListSecretRequest)
 	}, nil
 }
 
-func (s *SecretServer) UpdateSecret(context.Context, *pb.UpdateSecretRequest) (*pb.UpdateSecretResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "Uninmplemented")
+func (s *SecretServer) UpdateSecret(ctx context.Context, in *pb.UpdateSecretRequest) (*pb.UpdateSecretResponse, error) {
+	account, err := s.findAccount(ctx)
+	if err != nil {
+		return nil, logError(status.Errorf(codes.Internal, "cannot get account from db. Err :%s", err))
+	}
+
+	log.Info().Msgf("Got UpdateSecret request for login '%s'", account.Username)
+
+	cipher, err := s.crypto.Encrypt(in.Data.Value)
+	if err != nil {
+		return nil, logError(status.Errorf(codes.Internal, "cannot encrypt the secret. Err :%s", err))
+	}
+
+	arg := db.UpdateSecretParams{
+		Key:       in.Data.Key,
+		AccountID: account.ID,
+		Value:     cipher,
+	}
+
+	if err := s.secretStore.UpdateSecret(ctx, arg); err != nil {
+		return nil, logError(status.Errorf(codes.Internal, "cannot update the secret. Err :%s", err))
+	}
+	return &pb.UpdateSecretResponse{
+		Data: &pb.SecretMessage{
+			Key:   in.Data.Key,
+			Value: in.Data.Value,
+		},
+	}, nil
 }
