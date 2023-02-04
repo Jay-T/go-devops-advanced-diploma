@@ -375,7 +375,7 @@ var Secret_ServiceDesc = grpc.ServiceDesc{
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type FileClient interface {
 	CreateFile(ctx context.Context, opts ...grpc.CallOption) (File_CreateFileClient, error)
-	UpdateFileName(ctx context.Context, in *UpdateFileRequest, opts ...grpc.CallOption) (*UpdateFileResponse, error)
+	UpdateFileName(ctx context.Context, in *UpdateFileNameRequest, opts ...grpc.CallOption) (*UpdateFileNameResponse, error)
 	DeleteFile(ctx context.Context, in *DeleteFileRequest, opts ...grpc.CallOption) (*DeleteFileResponse, error)
 	GetFile(ctx context.Context, in *GetFileRequest, opts ...grpc.CallOption) (File_GetFileClient, error)
 	ListFiles(ctx context.Context, in *ListFilesRequest, opts ...grpc.CallOption) (*ListFilesResponse, error)
@@ -423,8 +423,8 @@ func (x *fileCreateFileClient) CloseAndRecv() (*CreateFileResponse, error) {
 	return m, nil
 }
 
-func (c *fileClient) UpdateFileName(ctx context.Context, in *UpdateFileRequest, opts ...grpc.CallOption) (*UpdateFileResponse, error) {
-	out := new(UpdateFileResponse)
+func (c *fileClient) UpdateFileName(ctx context.Context, in *UpdateFileNameRequest, opts ...grpc.CallOption) (*UpdateFileNameResponse, error) {
+	out := new(UpdateFileNameResponse)
 	err := c.cc.Invoke(ctx, "/go_devops_advanced_diploma.File/UpdateFileName", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -487,7 +487,7 @@ func (c *fileClient) ListFiles(ctx context.Context, in *ListFilesRequest, opts .
 // for forward compatibility
 type FileServer interface {
 	CreateFile(File_CreateFileServer) error
-	UpdateFileName(context.Context, *UpdateFileRequest) (*UpdateFileResponse, error)
+	UpdateFileName(context.Context, *UpdateFileNameRequest) (*UpdateFileNameResponse, error)
 	DeleteFile(context.Context, *DeleteFileRequest) (*DeleteFileResponse, error)
 	GetFile(*GetFileRequest, File_GetFileServer) error
 	ListFiles(context.Context, *ListFilesRequest) (*ListFilesResponse, error)
@@ -501,7 +501,7 @@ type UnimplementedFileServer struct {
 func (UnimplementedFileServer) CreateFile(File_CreateFileServer) error {
 	return status.Errorf(codes.Unimplemented, "method CreateFile not implemented")
 }
-func (UnimplementedFileServer) UpdateFileName(context.Context, *UpdateFileRequest) (*UpdateFileResponse, error) {
+func (UnimplementedFileServer) UpdateFileName(context.Context, *UpdateFileNameRequest) (*UpdateFileNameResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateFileName not implemented")
 }
 func (UnimplementedFileServer) DeleteFile(context.Context, *DeleteFileRequest) (*DeleteFileResponse, error) {
@@ -553,7 +553,7 @@ func (x *fileCreateFileServer) Recv() (*CreateFileRequest, error) {
 }
 
 func _File_UpdateFileName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateFileRequest)
+	in := new(UpdateFileNameRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -565,7 +565,7 @@ func _File_UpdateFileName_Handler(srv interface{}, ctx context.Context, dec func
 		FullMethod: "/go_devops_advanced_diploma.File/UpdateFileName",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FileServer).UpdateFileName(ctx, req.(*UpdateFileRequest))
+		return srv.(FileServer).UpdateFileName(ctx, req.(*UpdateFileNameRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

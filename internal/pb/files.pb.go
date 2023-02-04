@@ -228,20 +228,17 @@ func (x *CreateFileResponse) GetInfo() *FileInfo {
 	return nil
 }
 
-type UpdateFileRequest struct {
+type UpdateFileNameRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Types that are assignable to Data:
-	//
-	//	*UpdateFileRequest_Info
-	//	*UpdateFileRequest_ChunkData
-	Data isUpdateFileRequest_Data `protobuf_oneof:"data"`
+	Info        *FileInfo `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
+	NewFilename string    `protobuf:"bytes,2,opt,name=new_filename,json=newFilename,proto3" json:"new_filename,omitempty"`
 }
 
-func (x *UpdateFileRequest) Reset() {
-	*x = UpdateFileRequest{}
+func (x *UpdateFileNameRequest) Reset() {
+	*x = UpdateFileNameRequest{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_files_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -249,13 +246,13 @@ func (x *UpdateFileRequest) Reset() {
 	}
 }
 
-func (x *UpdateFileRequest) String() string {
+func (x *UpdateFileNameRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*UpdateFileRequest) ProtoMessage() {}
+func (*UpdateFileNameRequest) ProtoMessage() {}
 
-func (x *UpdateFileRequest) ProtoReflect() protoreflect.Message {
+func (x *UpdateFileNameRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_files_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -267,49 +264,26 @@ func (x *UpdateFileRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use UpdateFileRequest.ProtoReflect.Descriptor instead.
-func (*UpdateFileRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use UpdateFileNameRequest.ProtoReflect.Descriptor instead.
+func (*UpdateFileNameRequest) Descriptor() ([]byte, []int) {
 	return file_files_proto_rawDescGZIP(), []int{3}
 }
 
-func (m *UpdateFileRequest) GetData() isUpdateFileRequest_Data {
-	if m != nil {
-		return m.Data
-	}
-	return nil
-}
-
-func (x *UpdateFileRequest) GetInfo() *FileInfo {
-	if x, ok := x.GetData().(*UpdateFileRequest_Info); ok {
+func (x *UpdateFileNameRequest) GetInfo() *FileInfo {
+	if x != nil {
 		return x.Info
 	}
 	return nil
 }
 
-func (x *UpdateFileRequest) GetChunkData() []byte {
-	if x, ok := x.GetData().(*UpdateFileRequest_ChunkData); ok {
-		return x.ChunkData
+func (x *UpdateFileNameRequest) GetNewFilename() string {
+	if x != nil {
+		return x.NewFilename
 	}
-	return nil
+	return ""
 }
 
-type isUpdateFileRequest_Data interface {
-	isUpdateFileRequest_Data()
-}
-
-type UpdateFileRequest_Info struct {
-	Info *FileInfo `protobuf:"bytes,1,opt,name=info,proto3,oneof"`
-}
-
-type UpdateFileRequest_ChunkData struct {
-	ChunkData []byte `protobuf:"bytes,2,opt,name=chunk_data,json=chunkData,proto3,oneof"`
-}
-
-func (*UpdateFileRequest_Info) isUpdateFileRequest_Data() {}
-
-func (*UpdateFileRequest_ChunkData) isUpdateFileRequest_Data() {}
-
-type UpdateFileResponse struct {
+type UpdateFileNameResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -317,8 +291,8 @@ type UpdateFileResponse struct {
 	Info *FileInfo `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
 }
 
-func (x *UpdateFileResponse) Reset() {
-	*x = UpdateFileResponse{}
+func (x *UpdateFileNameResponse) Reset() {
+	*x = UpdateFileNameResponse{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_files_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -326,13 +300,13 @@ func (x *UpdateFileResponse) Reset() {
 	}
 }
 
-func (x *UpdateFileResponse) String() string {
+func (x *UpdateFileNameResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*UpdateFileResponse) ProtoMessage() {}
+func (*UpdateFileNameResponse) ProtoMessage() {}
 
-func (x *UpdateFileResponse) ProtoReflect() protoreflect.Message {
+func (x *UpdateFileNameResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_files_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -344,12 +318,12 @@ func (x *UpdateFileResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use UpdateFileResponse.ProtoReflect.Descriptor instead.
-func (*UpdateFileResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use UpdateFileNameResponse.ProtoReflect.Descriptor instead.
+func (*UpdateFileNameResponse) Descriptor() ([]byte, []int) {
 	return file_files_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *UpdateFileResponse) GetInfo() *FileInfo {
+func (x *UpdateFileNameResponse) GetInfo() *FileInfo {
 	if x != nil {
 		return x.Info
 	}
@@ -709,15 +683,15 @@ var file_files_proto_rawDesc = []byte{
 	0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x24, 0x2e, 0x67, 0x6f, 0x5f, 0x64, 0x65, 0x76,
 	0x6f, 0x70, 0x73, 0x5f, 0x61, 0x64, 0x76, 0x61, 0x6e, 0x63, 0x65, 0x64, 0x5f, 0x64, 0x69, 0x70,
 	0x6c, 0x6f, 0x6d, 0x61, 0x2e, 0x46, 0x69, 0x6c, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x04, 0x69,
-	0x6e, 0x66, 0x6f, 0x22, 0x78, 0x0a, 0x11, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x46, 0x69, 0x6c,
-	0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x3a, 0x0a, 0x04, 0x69, 0x6e, 0x66, 0x6f,
-	0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x24, 0x2e, 0x67, 0x6f, 0x5f, 0x64, 0x65, 0x76, 0x6f,
-	0x70, 0x73, 0x5f, 0x61, 0x64, 0x76, 0x61, 0x6e, 0x63, 0x65, 0x64, 0x5f, 0x64, 0x69, 0x70, 0x6c,
-	0x6f, 0x6d, 0x61, 0x2e, 0x46, 0x69, 0x6c, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x48, 0x00, 0x52, 0x04,
-	0x69, 0x6e, 0x66, 0x6f, 0x12, 0x1f, 0x0a, 0x0a, 0x63, 0x68, 0x75, 0x6e, 0x6b, 0x5f, 0x64, 0x61,
-	0x74, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x48, 0x00, 0x52, 0x09, 0x63, 0x68, 0x75, 0x6e,
-	0x6b, 0x44, 0x61, 0x74, 0x61, 0x42, 0x06, 0x0a, 0x04, 0x64, 0x61, 0x74, 0x61, 0x22, 0x4e, 0x0a,
-	0x12, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x46, 0x69, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x66, 0x6f, 0x22, 0x74, 0x0a, 0x15, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x46, 0x69, 0x6c,
+	0x65, 0x4e, 0x61, 0x6d, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x38, 0x0a, 0x04,
+	0x69, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x24, 0x2e, 0x67, 0x6f, 0x5f,
+	0x64, 0x65, 0x76, 0x6f, 0x70, 0x73, 0x5f, 0x61, 0x64, 0x76, 0x61, 0x6e, 0x63, 0x65, 0x64, 0x5f,
+	0x64, 0x69, 0x70, 0x6c, 0x6f, 0x6d, 0x61, 0x2e, 0x46, 0x69, 0x6c, 0x65, 0x49, 0x6e, 0x66, 0x6f,
+	0x52, 0x04, 0x69, 0x6e, 0x66, 0x6f, 0x12, 0x21, 0x0a, 0x0c, 0x6e, 0x65, 0x77, 0x5f, 0x66, 0x69,
+	0x6c, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x6e, 0x65,
+	0x77, 0x46, 0x69, 0x6c, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0x52, 0x0a, 0x16, 0x55, 0x70, 0x64,
+	0x61, 0x74, 0x65, 0x46, 0x69, 0x6c, 0x65, 0x4e, 0x61, 0x6d, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f,
 	0x6e, 0x73, 0x65, 0x12, 0x38, 0x0a, 0x04, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28,
 	0x0b, 0x32, 0x24, 0x2e, 0x67, 0x6f, 0x5f, 0x64, 0x65, 0x76, 0x6f, 0x70, 0x73, 0x5f, 0x61, 0x64,
 	0x76, 0x61, 0x6e, 0x63, 0x65, 0x64, 0x5f, 0x64, 0x69, 0x70, 0x6c, 0x6f, 0x6d, 0x61, 0x2e, 0x46,
@@ -774,27 +748,27 @@ func file_files_proto_rawDescGZIP() []byte {
 
 var file_files_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_files_proto_goTypes = []interface{}{
-	(*FileInfo)(nil),              // 0: go_devops_advanced_diploma.FileInfo
-	(*CreateFileRequest)(nil),     // 1: go_devops_advanced_diploma.CreateFileRequest
-	(*CreateFileResponse)(nil),    // 2: go_devops_advanced_diploma.CreateFileResponse
-	(*UpdateFileRequest)(nil),     // 3: go_devops_advanced_diploma.UpdateFileRequest
-	(*UpdateFileResponse)(nil),    // 4: go_devops_advanced_diploma.UpdateFileResponse
-	(*DeleteFileRequest)(nil),     // 5: go_devops_advanced_diploma.DeleteFileRequest
-	(*DeleteFileResponse)(nil),    // 6: go_devops_advanced_diploma.DeleteFileResponse
-	(*GetFileRequest)(nil),        // 7: go_devops_advanced_diploma.GetFileRequest
-	(*GetFileResponse)(nil),       // 8: go_devops_advanced_diploma.GetFileResponse
-	(*ListFilesRequest)(nil),      // 9: go_devops_advanced_diploma.ListFilesRequest
-	(*ListFilesResponse)(nil),     // 10: go_devops_advanced_diploma.ListFilesResponse
-	(*Metadata)(nil),              // 11: go_devops_advanced_diploma.Metadata
-	(*timestamppb.Timestamp)(nil), // 12: google.protobuf.Timestamp
+	(*FileInfo)(nil),               // 0: go_devops_advanced_diploma.FileInfo
+	(*CreateFileRequest)(nil),      // 1: go_devops_advanced_diploma.CreateFileRequest
+	(*CreateFileResponse)(nil),     // 2: go_devops_advanced_diploma.CreateFileResponse
+	(*UpdateFileNameRequest)(nil),  // 3: go_devops_advanced_diploma.UpdateFileNameRequest
+	(*UpdateFileNameResponse)(nil), // 4: go_devops_advanced_diploma.UpdateFileNameResponse
+	(*DeleteFileRequest)(nil),      // 5: go_devops_advanced_diploma.DeleteFileRequest
+	(*DeleteFileResponse)(nil),     // 6: go_devops_advanced_diploma.DeleteFileResponse
+	(*GetFileRequest)(nil),         // 7: go_devops_advanced_diploma.GetFileRequest
+	(*GetFileResponse)(nil),        // 8: go_devops_advanced_diploma.GetFileResponse
+	(*ListFilesRequest)(nil),       // 9: go_devops_advanced_diploma.ListFilesRequest
+	(*ListFilesResponse)(nil),      // 10: go_devops_advanced_diploma.ListFilesResponse
+	(*Metadata)(nil),               // 11: go_devops_advanced_diploma.Metadata
+	(*timestamppb.Timestamp)(nil),  // 12: google.protobuf.Timestamp
 }
 var file_files_proto_depIdxs = []int32{
 	11, // 0: go_devops_advanced_diploma.FileInfo.metadata:type_name -> go_devops_advanced_diploma.Metadata
 	12, // 1: go_devops_advanced_diploma.FileInfo.created_at:type_name -> google.protobuf.Timestamp
 	0,  // 2: go_devops_advanced_diploma.CreateFileRequest.info:type_name -> go_devops_advanced_diploma.FileInfo
 	0,  // 3: go_devops_advanced_diploma.CreateFileResponse.info:type_name -> go_devops_advanced_diploma.FileInfo
-	0,  // 4: go_devops_advanced_diploma.UpdateFileRequest.info:type_name -> go_devops_advanced_diploma.FileInfo
-	0,  // 5: go_devops_advanced_diploma.UpdateFileResponse.info:type_name -> go_devops_advanced_diploma.FileInfo
+	0,  // 4: go_devops_advanced_diploma.UpdateFileNameRequest.info:type_name -> go_devops_advanced_diploma.FileInfo
+	0,  // 5: go_devops_advanced_diploma.UpdateFileNameResponse.info:type_name -> go_devops_advanced_diploma.FileInfo
 	0,  // 6: go_devops_advanced_diploma.DeleteFileRequest.info:type_name -> go_devops_advanced_diploma.FileInfo
 	0,  // 7: go_devops_advanced_diploma.DeleteFileResponse.info:type_name -> go_devops_advanced_diploma.FileInfo
 	0,  // 8: go_devops_advanced_diploma.GetFileRequest.key:type_name -> go_devops_advanced_diploma.FileInfo
@@ -852,7 +826,7 @@ func file_files_proto_init() {
 			}
 		}
 		file_files_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateFileRequest); i {
+			switch v := v.(*UpdateFileNameRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -864,7 +838,7 @@ func file_files_proto_init() {
 			}
 		}
 		file_files_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateFileResponse); i {
+			switch v := v.(*UpdateFileNameResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -952,10 +926,6 @@ func file_files_proto_init() {
 	file_files_proto_msgTypes[1].OneofWrappers = []interface{}{
 		(*CreateFileRequest_Info)(nil),
 		(*CreateFileRequest_ChunkData)(nil),
-	}
-	file_files_proto_msgTypes[3].OneofWrappers = []interface{}{
-		(*UpdateFileRequest_Info)(nil),
-		(*UpdateFileRequest_ChunkData)(nil),
 	}
 	file_files_proto_msgTypes[8].OneofWrappers = []interface{}{
 		(*GetFileResponse_Info)(nil),

@@ -25,14 +25,13 @@ message CreateFileResponse {
     FileInfo info = 1;
 }
 
-message UpdateFileRequest {
-    oneof data {
-        FileInfo info = 1;
-        bytes chunk_data = 2;
-    };
+message UpdateFileNameRequest {
+    FileInfo info = 1;
+    string new_filename = 2;
+
 }
 
-message UpdateFileResponse {
+message UpdateFileNameResponse {
     FileInfo info = 1;
 }
 

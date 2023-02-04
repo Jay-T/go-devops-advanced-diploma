@@ -23,7 +23,7 @@ service Secret {
 
 service File {
     rpc CreateFile(stream CreateFileRequest) returns (CreateFileResponse) {}
-    rpc UpdateFileName(UpdateFileRequest) returns (UpdateFileResponse) {}
+    rpc UpdateFileName(UpdateFileNameRequest) returns (UpdateFileNameResponse) {}
     rpc DeleteFile(DeleteFileRequest) returns (DeleteFileResponse) {}
     rpc GetFile(GetFileRequest) returns (stream GetFileResponse) {}
     rpc ListFiles(ListFilesRequest) returns (ListFilesResponse) {}

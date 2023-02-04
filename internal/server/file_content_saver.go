@@ -13,6 +13,7 @@ import (
 type FileContentSaver interface {
 	Save(ctx context.Context, filename string, filepath string, fileData bytes.Buffer) error
 	Delete(ctx context.Context, filename string, filepath string) error
+	Rename(ctx context.Context, oldName string, newName string, pathname string) error
 }
 
 type DiskFileContentSaver struct {
@@ -53,6 +54,22 @@ func (fs *DiskFileContentSaver) Delete(ctx context.Context, filename string, fil
 	err := os.Remove(file)
 	if err != nil {
 		return nil
+	}
+
+	return nil
+}
+
+func (fs *DiskFileContentSaver) Rename(
+	ctx context.Context,
+	oldName string,
+	newName string,
+	pathname string,
+) error {
+	originFile := fmt.Sprintf("%s/%s/%s", fs.fileFolder, pathname, oldName)
+	newFile := fmt.Sprintf("%s/%s/%s", fs.fileFolder, pathname, newName)
+	err := os.Rename(originFile, newFile)
+	if err != nil {
+		return err
 	}
 
 	return nil

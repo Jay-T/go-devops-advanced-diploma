@@ -68,7 +68,7 @@ func protectedMethods() map[string]bool {
 		protectedFileServicePath + "DeleteFile":     true,
 		protectedFileServicePath + "GetFile":        true,
 		protectedFileServicePath + "ListFile":       true,
-		protectedFileServicePath + "UpdateFile":     true,
+		protectedFileServicePath + "UpdateFileName": true,
 	}
 }
 

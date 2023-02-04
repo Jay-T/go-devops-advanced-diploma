@@ -14,6 +14,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -175,8 +176,57 @@ func (s *FileServer) DeleteFile(ctx context.Context, in *pb.DeleteFileRequest) (
 }
 
 // UpdateFileName allows to change file name.
-func (s *FileServer) UpdateFileName(context.Context, *pb.UpdateFileRequest) (*pb.UpdateFileResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateFileName not implemented")
+func (s *FileServer) UpdateFileName(ctx context.Context, in *pb.UpdateFileNameRequest) (*pb.UpdateFileNameResponse, error) {
+	account, err := findAccount(ctx, s.fileStore)
+	if err != nil {
+		return nil, logError(status.Errorf(codes.Internal, "cannot get account from db. Err :%s", err))
+	}
+
+	log.Info().Msgf("receive an UpdateFileName request from user %s", account.Username)
+
+	oldName := in.Info.Filename
+	newName := in.NewFilename
+	path := in.Info.Filepath
+
+	argGetFile := db.GetFileParams{
+		AccountID: account.ID,
+		Filename:  oldName,
+		Filepath:  path,
+	}
+
+	file, err := s.fileStore.GetFile(ctx, argGetFile)
+	if err != nil {
+		return nil, logError(status.Errorf(codes.Internal, "failed to find the file: Err: %s", err))
+	}
+
+	pathFS := fmt.Sprintf("%s/%s", account.Username, path)
+	err = s.fileContentSaver.Rename(ctx, oldName, newName, pathFS)
+	if err != nil {
+		return nil, logError(status.Errorf(codes.Internal, "cannot rename file in fs. Err :%s", err))
+	}
+
+	arg := db.UpdateFileNameParams{
+		Filename:   oldName,
+		Filepath:   path,
+		AccountID:  account.ID,
+		Filename_2: newName,
+	}
+
+	err = s.fileStore.UpdateFileName(ctx, arg)
+	if err != nil {
+		return nil, logError(status.Errorf(codes.Internal, "cannot rename file in db. Err :%s", err))
+	}
+
+	resp := &pb.UpdateFileNameResponse{
+		Info: &pb.FileInfo{
+			Filename:  newName,
+			Filepath:  in.Info.Filepath,
+			Size:      toUint64Ref(file.Filesize),
+			CreatedAt: timestamppb.New(file.CreatedAt),
+		},
+	}
+
+	return resp, nil
 }
 
 // GetFile returns a file.
