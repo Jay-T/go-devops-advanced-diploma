@@ -11,6 +11,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -378,7 +379,7 @@ type FileClient interface {
 	UpdateFileName(ctx context.Context, in *UpdateFileNameRequest, opts ...grpc.CallOption) (*UpdateFileNameResponse, error)
 	DeleteFile(ctx context.Context, in *DeleteFileRequest, opts ...grpc.CallOption) (*DeleteFileResponse, error)
 	GetFile(ctx context.Context, in *GetFileRequest, opts ...grpc.CallOption) (File_GetFileClient, error)
-	ListFiles(ctx context.Context, in *ListFilesRequest, opts ...grpc.CallOption) (*ListFilesResponse, error)
+	ListFiles(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListFilesResponse, error)
 }
 
 type fileClient struct {
@@ -473,7 +474,7 @@ func (x *fileGetFileClient) Recv() (*GetFileResponse, error) {
 	return m, nil
 }
 
-func (c *fileClient) ListFiles(ctx context.Context, in *ListFilesRequest, opts ...grpc.CallOption) (*ListFilesResponse, error) {
+func (c *fileClient) ListFiles(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListFilesResponse, error) {
 	out := new(ListFilesResponse)
 	err := c.cc.Invoke(ctx, "/go_devops_advanced_diploma.File/ListFiles", in, out, opts...)
 	if err != nil {
@@ -490,7 +491,7 @@ type FileServer interface {
 	UpdateFileName(context.Context, *UpdateFileNameRequest) (*UpdateFileNameResponse, error)
 	DeleteFile(context.Context, *DeleteFileRequest) (*DeleteFileResponse, error)
 	GetFile(*GetFileRequest, File_GetFileServer) error
-	ListFiles(context.Context, *ListFilesRequest) (*ListFilesResponse, error)
+	ListFiles(context.Context, *emptypb.Empty) (*ListFilesResponse, error)
 	mustEmbedUnimplementedFileServer()
 }
 
@@ -510,7 +511,7 @@ func (UnimplementedFileServer) DeleteFile(context.Context, *DeleteFileRequest) (
 func (UnimplementedFileServer) GetFile(*GetFileRequest, File_GetFileServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetFile not implemented")
 }
-func (UnimplementedFileServer) ListFiles(context.Context, *ListFilesRequest) (*ListFilesResponse, error) {
+func (UnimplementedFileServer) ListFiles(context.Context, *emptypb.Empty) (*ListFilesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListFiles not implemented")
 }
 func (UnimplementedFileServer) mustEmbedUnimplementedFileServer() {}
@@ -610,7 +611,7 @@ func (x *fileGetFileServer) Send(m *GetFileResponse) error {
 }
 
 func _File_ListFiles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListFilesRequest)
+	in := new(emptypb.Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -622,7 +623,7 @@ func _File_ListFiles_Handler(srv interface{}, ctx context.Context, dec func(inte
 		FullMethod: "/go_devops_advanced_diploma.File/ListFiles",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FileServer).ListFiles(ctx, req.(*ListFilesRequest))
+		return srv.(FileServer).ListFiles(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }

@@ -54,10 +54,6 @@ message GetFileResponse {
     };
 }
 
-message ListFilesRequest {
-    FileInfo info = 1;
-}
-
 message ListFilesResponse {
     repeated FileInfo info = 1;
 }

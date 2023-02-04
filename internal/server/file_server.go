@@ -14,6 +14,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -229,14 +230,40 @@ func (s *FileServer) UpdateFileName(ctx context.Context, in *pb.UpdateFileNameRe
 	return resp, nil
 }
 
+// ListFiles lists all files belong to user.
+func (s *FileServer) ListFiles(ctx context.Context, in *emptypb.Empty) (*pb.ListFilesResponse, error) {
+	account, err := findAccount(ctx, s.fileStore)
+	if err != nil {
+		return nil, logError(status.Errorf(codes.Internal, "cannot get account from db. Err :%s", err))
+	}
+
+	log.Info().Msgf("receive an UpdateFileName request from user %s", account.Username)
+
+	files, err := s.fileStore.ListFiles(ctx, account.ID)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			return nil, logError(status.Errorf(codes.NotFound, "no files found."))
+		}
+		return nil, logError(status.Errorf(codes.Internal, "cannot get files. Err :%s", err))
+	}
+	var pbFiles []*pb.FileInfo
+	for _, file := range files {
+		pbFiles = append(pbFiles, &pb.FileInfo{
+			Filepath:  file.Filepath,
+			Filename:  file.Filename,
+			Size:      toUint64Ref(file.Filesize),
+			CreatedAt: timestamppb.New(file.CreatedAt),
+		})
+	}
+
+	return &pb.ListFilesResponse{
+		Info: pbFiles,
+	}, nil
+}
+
 // GetFile returns a file.
 func (s *FileServer) GetFile(*pb.GetFileRequest, pb.File_GetFileServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetFile not implemented")
-}
-
-// ListFiles lists all files belong to user.
-func (s *FileServer) ListFiles(context.Context, *pb.ListFilesRequest) (*pb.ListFilesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListFile not implemented")
 }
 
 // contextError handles context events.
