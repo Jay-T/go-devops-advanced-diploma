@@ -3,7 +3,7 @@ syntax = "proto3";
 package go_devops_advanced_diploma;
 
 option go_package = "github.com/Jay-T/go-devops-advanced-diploma/internal/pb";
-
+import "google/protobuf/timestamp.proto";
 
 message LoginRequest {
     string login = 1;
@@ -13,6 +13,7 @@ message LoginRequest {
 message LoginResponse {
     string login = 1;
     string token = 2;
+    google.protobuf.Timestamp access_token_expires_at = 5;
 }
 
 message RegisterRequest {
@@ -23,4 +24,5 @@ message RegisterRequest {
 message RegisterResponse {
     string login = 1;
     string token = 2;
+    google.protobuf.Timestamp access_token_expires_at = 5;
 }

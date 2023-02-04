@@ -13,35 +13,27 @@ const createFile = `-- name: CreateFile :one
 INSERT INTO files (
   account_id,
   filename,
-  filepath,
-  ready
+  filepath
 ) VALUES (
-  $1, $2, $3, $4
+  $1, $2, $3
 )
-RETURNING id, account_id, filename, filepath, ready, created_at
+RETURNING id, account_id, filename, filepath, created_at
 `
 
 type CreateFileParams struct {
 	AccountID int64  `json:"account_id"`
 	Filename  string `json:"filename"`
 	Filepath  string `json:"filepath"`
-	Ready     bool   `json:"ready"`
 }
 
 func (q *Queries) CreateFile(ctx context.Context, arg CreateFileParams) (File, error) {
-	row := q.db.QueryRowContext(ctx, createFile,
-		arg.AccountID,
-		arg.Filename,
-		arg.Filepath,
-		arg.Ready,
-	)
+	row := q.db.QueryRowContext(ctx, createFile, arg.AccountID, arg.Filename, arg.Filepath)
 	var i File
 	err := row.Scan(
 		&i.ID,
 		&i.AccountID,
 		&i.Filename,
 		&i.Filepath,
-		&i.Ready,
 		&i.CreatedAt,
 	)
 	return i, err
@@ -63,7 +55,7 @@ func (q *Queries) DeleteFile(ctx context.Context, arg DeleteFileParams) error {
 }
 
 const getFile = `-- name: GetFile :one
-SELECT id, account_id, filename, filepath, ready, created_at FROM files
+SELECT id, account_id, filename, filepath, created_at FROM files
 WHERE filename = $1 and account_id = $2 LIMIT 1
 `
 
@@ -80,14 +72,13 @@ func (q *Queries) GetFile(ctx context.Context, arg GetFileParams) (File, error) 
 		&i.AccountID,
 		&i.Filename,
 		&i.Filepath,
-		&i.Ready,
 		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const listFiles = `-- name: ListFiles :many
-SELECT id, account_id, filename, filepath, ready, created_at FROM files
+SELECT id, account_id, filename, filepath, created_at FROM files
 WHERE account_id = $1 
 ORDER BY filename
 `
@@ -106,7 +97,6 @@ func (q *Queries) ListFiles(ctx context.Context, accountID int64) ([]File, error
 			&i.AccountID,
 			&i.Filename,
 			&i.Filepath,
-			&i.Ready,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err
@@ -120,22 +110,6 @@ func (q *Queries) ListFiles(ctx context.Context, accountID int64) ([]File, error
 		return nil, err
 	}
 	return items, nil
-}
-
-const markFileReady = `-- name: MarkFileReady :exec
-UPDATE files
-  set ready = true
-WHERE filename = $1 and account_id = $2
-`
-
-type MarkFileReadyParams struct {
-	Filename  string `json:"filename"`
-	AccountID int64  `json:"account_id"`
-}
-
-func (q *Queries) MarkFileReady(ctx context.Context, arg MarkFileReadyParams) error {
-	_, err := q.db.ExecContext(ctx, markFileReady, arg.Filename, arg.AccountID)
-	return err
 }
 
 const updateFilePath = `-- name: UpdateFilePath :exec

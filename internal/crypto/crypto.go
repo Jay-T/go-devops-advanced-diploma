@@ -18,10 +18,10 @@ func NewCryptoService(keyString string) *CryptoService {
 	return &CryptoService{key}
 }
 
-func (cs *CryptoService) Encrypt(plaintext string) (string, error) {
+func (cs *CryptoService) Encrypt(plaintext string, key []byte) (string, error) {
 	plainBytes := []byte(plaintext)
 
-	c, err := aes.NewCipher(cs.key)
+	c, err := aes.NewCipher(key)
 	if err != nil {
 		return "", err
 	}
@@ -40,13 +40,13 @@ func (cs *CryptoService) Encrypt(plaintext string) (string, error) {
 	return base64.StdEncoding.EncodeToString(cipher), nil
 }
 
-func (cs *CryptoService) Decrypt(ciphertext string) (string, error) {
+func (cs *CryptoService) Decrypt(ciphertext string, key []byte) (string, error) {
 	cipherBytes, err := base64.StdEncoding.DecodeString(ciphertext)
 	if err != nil {
 		return "", err
 	}
 
-	c, err := aes.NewCipher(cs.key)
+	c, err := aes.NewCipher(key)
 	if err != nil {
 		return "", err
 	}

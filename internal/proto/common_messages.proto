@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package go_devops_advanced_diploma;
+
+option go_package = "github.com/Jay-T/go-devops-advanced-diploma/internal/pb";
+
+message Metadata {
+    string key = 1;
+    string value = 2;
+}

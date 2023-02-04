@@ -2,21 +2,15 @@
 INSERT INTO files (
   account_id,
   filename,
-  filepath,
-  ready
+  filepath
 ) VALUES (
-  $1, $2, $3, $4
+  $1, $2, $3
 )
 RETURNING *;
 
 -- name: UpdateFilePath :exec
 UPDATE files
   set filepath = $3
-WHERE filename = $1 and account_id = $2;
-
--- name: MarkFileReady :exec
-UPDATE files
-  set ready = true
 WHERE filename = $1 and account_id = $2;
 
 -- name: GetFile :one

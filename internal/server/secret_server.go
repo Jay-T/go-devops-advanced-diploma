@@ -3,6 +3,8 @@ package server
 import (
 	"context"
 	"database/sql"
+	"encoding/base32"
+	"encoding/base64"
 
 	db "github.com/Jay-T/go-devops-advanced-diploma/db/sqlc"
 	"github.com/Jay-T/go-devops-advanced-diploma/internal/crypto"
@@ -14,20 +16,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *SecretServer) findAccount(ctx context.Context) (db.Account, error) {
-	username, err := getUsernameFromContext(ctx)
-	if err != nil {
-		return db.Account{}, err
-	}
-
-	account, err := s.secretStore.GetAccount(ctx, username)
-	if err != nil {
-		return db.Account{}, logError(status.Errorf(codes.Internal, "cannot get account from db. Err :%s", err))
-	}
-
-	return account, nil
-}
-
+// getUsernameFromContext extracts username from incoming metadata.
 func getUsernameFromContext(ctx context.Context) (string, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
@@ -42,12 +31,14 @@ func getUsernameFromContext(ctx context.Context) (string, error) {
 	return values[0], nil
 }
 
+// SecretServer struct
 type SecretServer struct {
 	secretStore db.Store
 	crypto      *crypto.CryptoService
 	pb.UnimplementedSecretServer
 }
 
+// NewSecretServer returns new SecretServer instance.
 func NewSecretServer(secretStore db.Store, CS *crypto.CryptoService) *SecretServer {
 	return &SecretServer{
 		secretStore,
@@ -56,15 +47,18 @@ func NewSecretServer(secretStore db.Store, CS *crypto.CryptoService) *SecretServ
 	}
 }
 
+// CreateSecret creates secret in secret storage.
 func (s *SecretServer) CreateSecret(ctx context.Context, in *pb.CreateSecretRequest) (*pb.CreateSecretResponse, error) {
-	account, err := s.findAccount(ctx)
+	account, err := findAccount(ctx, s.secretStore)
 	if err != nil {
 		return nil, logError(status.Errorf(codes.Internal, "cannot get account from db. Err :%s", err))
 	}
 
 	log.Info().Msgf("Got CreateSecret request for login '%s'", account.Username)
 
-	cipher, err := s.crypto.Encrypt(in.Data.Value)
+	masterKey := base32.StdEncoding.EncodeToString([]byte(in.Data.Masterkey))
+
+	cipher, err := s.crypto.Encrypt(in.Data.Value, []byte(masterKey))
 	if err != nil {
 		return nil, logError(status.Errorf(codes.Internal, "cannot encrypt the secret. Err :%s", err))
 	}
@@ -96,8 +90,9 @@ func (s *SecretServer) CreateSecret(ctx context.Context, in *pb.CreateSecretRequ
 	}, nil
 }
 
+// DeleteSecret deletes secret from secret storage.
 func (s *SecretServer) DeleteSecret(ctx context.Context, in *pb.DeleteSecretRequest) (*pb.DeleteSecretResponse, error) {
-	account, err := s.findAccount(ctx)
+	account, err := findAccount(ctx, s.secretStore)
 	if err != nil {
 		return nil, logError(status.Errorf(codes.Internal, "cannot get account from db. Err :%s", err))
 	}
@@ -132,8 +127,9 @@ func (s *SecretServer) DeleteSecret(ctx context.Context, in *pb.DeleteSecretRequ
 	}, nil
 }
 
+// GetSecret returns secret info from secret storage.
 func (s *SecretServer) GetSecret(ctx context.Context, in *pb.GetSecretRequest) (*pb.GetSecretResponse, error) {
-	account, err := s.findAccount(ctx)
+	account, err := findAccount(ctx, s.secretStore)
 	if err != nil {
 		return nil, logError(status.Errorf(codes.Internal, "cannot get account from db. Err :%s", err))
 	}
@@ -154,9 +150,11 @@ func (s *SecretServer) GetSecret(ctx context.Context, in *pb.GetSecretRequest) (
 		return nil, logError(status.Errorf(codes.Internal, "cannot get secret: Err: %s", err))
 	}
 
-	decipher, err := s.crypto.Decrypt(secret.Value)
+	masterKey := base32.StdEncoding.EncodeToString([]byte(in.Masterkey))
+
+	decipher, err := s.crypto.Decrypt(secret.Value, []byte(masterKey))
 	if err != nil {
-		return nil, logError(status.Errorf(codes.Internal, "cannot decrypt the secret. Err :%s", err))
+		return nil, logError(status.Errorf(codes.Internal, "cannot decrypt the secret. Err: %s", err))
 	}
 
 	secretMSG := &pb.SecretMessage{
@@ -169,25 +167,33 @@ func (s *SecretServer) GetSecret(ctx context.Context, in *pb.GetSecretRequest) (
 	}, nil
 }
 
+// ListSecret returns all secrets from secret storage for user.
 func (s *SecretServer) ListSecret(ctx context.Context, in *pb.ListSecretRequest) (*pb.ListSecretResponse, error) {
-	account, err := s.findAccount(ctx)
+	account, err := findAccount(ctx, s.secretStore)
 	if err != nil {
-		return nil, logError(status.Errorf(codes.Internal, "cannot get account from db. Err :%s", err))
+		return nil, logError(status.Errorf(codes.Internal, "cannot get account from db. Err: %s", err))
 	}
 
 	log.Info().Msgf("Got ListSecret request for login '%s'", account.Username)
 
 	secrets, err := s.secretStore.ListSecrets(ctx, account.ID)
 	if err != nil {
-		return nil, logError(status.Errorf(codes.Internal, "cannot get secrets from db. Err :%s", err))
+		return nil, logError(status.Errorf(codes.Internal, "cannot get secrets from db. Err: %s", err))
 	}
 
 	secretsList := []*pb.SecretMessage{}
+	masterKey := base32.StdEncoding.EncodeToString([]byte(in.Masterkey))
+	if err != nil {
+		return nil, logError(status.Errorf(codes.Internal, "cannot encode masterkey. Err:%s", err))
+	}
 
 	for _, i := range secrets {
-		decipher, err := s.crypto.Decrypt(i.Value)
+		decipher, err := s.crypto.Decrypt(i.Value, []byte(masterKey))
 		if err != nil {
-			return nil, logError(status.Errorf(codes.Internal, "cannot decrypt the secret. Err :%s", err))
+			if err.Error() == "cipher: message authentication failed" {
+				return nil, logError(status.Error(codes.InvalidArgument, "masterkey is not correct."))
+			}
+			return nil, logError(status.Errorf(codes.Internal, "cannot decrypt the secret. Err: %s", err))
 		}
 
 		secretsList = append(secretsList, &pb.SecretMessage{
@@ -201,15 +207,21 @@ func (s *SecretServer) ListSecret(ctx context.Context, in *pb.ListSecretRequest)
 	}, nil
 }
 
+// UpdateSecret updates secret info in secret storage.
 func (s *SecretServer) UpdateSecret(ctx context.Context, in *pb.UpdateSecretRequest) (*pb.UpdateSecretResponse, error) {
-	account, err := s.findAccount(ctx)
+	account, err := findAccount(ctx, s.secretStore)
 	if err != nil {
 		return nil, logError(status.Errorf(codes.Internal, "cannot get account from db. Err :%s", err))
 	}
 
 	log.Info().Msgf("Got UpdateSecret request for login '%s'", account.Username)
 
-	cipher, err := s.crypto.Encrypt(in.Data.Value)
+	masterKey, err := base64.StdEncoding.DecodeString(in.Data.Masterkey)
+	if err != nil {
+		return nil, logError(status.Errorf(codes.Internal, "cannot decode masterkey. Err :%s", err))
+	}
+
+	cipher, err := s.crypto.Encrypt(in.Data.Value, masterKey)
 	if err != nil {
 		return nil, logError(status.Errorf(codes.Internal, "cannot encrypt the secret. Err :%s", err))
 	}

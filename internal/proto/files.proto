@@ -3,11 +3,14 @@ syntax = "proto3";
 package go_devops_advanced_diploma;
 
 option go_package = "github.com/Jay-T/go-devops-advanced-diploma/internal/pb";
+import "google/protobuf/timestamp.proto";
+import "common_messages.proto";
 
 message FileInfo {
     string filepath = 1;
     string filename = 2;
-    optional bool ready = 3;
+    repeated Metadata metadata = 3;
+    optional google.protobuf.Timestamp created_at = 4;
 }
 
 message CreateFileRequest {
