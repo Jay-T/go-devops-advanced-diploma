@@ -19,13 +19,15 @@ type Querier interface {
 	DeleteFile(ctx context.Context, arg DeleteFileParams) error
 	DeleteOneSecretMetadata(ctx context.Context, arg DeleteOneSecretMetadataParams) error
 	DeleteSecret(ctx context.Context, arg DeleteSecretParams) error
+	DeletedFileById(ctx context.Context, id int64) error
 	GetAccount(ctx context.Context, username string) (Account, error)
+	GetDeletedFiles(ctx context.Context) ([]GetDeletedFilesRow, error)
 	GetFile(ctx context.Context, arg GetFileParams) (File, error)
 	GetSecret(ctx context.Context, arg GetSecretParams) (Secret, error)
 	ListFiles(ctx context.Context, accountID int64) ([]File, error)
 	ListSecretMetadata(ctx context.Context, arg ListSecretMetadataParams) ([]Metadatum, error)
 	ListSecrets(ctx context.Context, accountID int64) ([]Secret, error)
-	UpdateFilePath(ctx context.Context, arg UpdateFilePathParams) error
+	UpdateFileName(ctx context.Context, arg UpdateFileNameParams) error
 	UpdateSecret(ctx context.Context, arg UpdateSecretParams) error
 	UpdateSecretMetadata(ctx context.Context, arg UpdateSecretMetadataParams) error
 }

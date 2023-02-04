@@ -3,10 +3,14 @@ package server
 import (
 	"bytes"
 	"context"
+	"database/sql"
+	"fmt"
 	"io"
+	"time"
 
 	db "github.com/Jay-T/go-devops-advanced-diploma/db/sqlc"
 	"github.com/Jay-T/go-devops-advanced-diploma/internal/pb"
+	"github.com/lib/pq"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -22,32 +26,20 @@ type FileServer struct {
 	pb.UnimplementedFileServer
 }
 
-func NewFileServer(fileStore db.Store) *FileServer {
+func NewFileServer(ctx context.Context, fileStore db.Store) *FileServer {
 	fileContentSaver := NewDiskFileContentSaver("fs")
-	return &FileServer{
+	s := &FileServer{
 		fileStore,
 		fileContentSaver,
 		pb.UnimplementedFileServer{},
 	}
+	go s.ClearFileStorage(ctx)
+
+	return s
 }
 
-// // findAccount gets account info from Accounts table.
-// func (s *AuthServer) findAccount(ctx context.Context) (db.Account, error) {
-// 	username, err := getUsernameFromContext(ctx)
-// 	if err != nil {
-// 		return db.Account{}, err
-// 	}
-
-// 	account, err := s.accountStore.GetAccount(ctx, username)
-// 	if err != nil {
-// 		return db.Account{}, logError(status.Errorf(codes.Internal, "cannot get account from db. Err :%s", err))
-// 	}
-
-// 	return account, nil
-// }
-
+// CreateFile creates file in storage for user.
 func (s *FileServer) CreateFile(stream pb.File_CreateFileServer) error {
-	// TODO(): make as TX !!!
 	ctx := stream.Context()
 	account, err := findAccount(ctx, s.fileStore)
 	if err != nil {
@@ -60,94 +52,88 @@ func (s *FileServer) CreateFile(stream pb.File_CreateFileServer) error {
 	if err != nil {
 		return logError(status.Errorf(codes.Unknown, "cannot receive file info"))
 	}
-	arg := db.CreateFileParams{
+	filename := req.GetInfo().Filename
+	filepath := req.GetInfo().Filepath
+
+	arg := db.GetFileParams{
 		AccountID: account.ID,
-		Filename:  req.GetInfo().Filename,
-		Filepath:  req.GetInfo().Filepath,
+		Filename:  filename,
+		Filepath:  filepath,
 	}
 
-	var file db.File
-	errChan := make(chan error)
-	go func() {
-		file, err = s.fileStore.CreateFileTx(ctx, arg, errChan)
-	}()
-	// if err != nil {
-	// 	if pqErr, ok := err.(*pq.Error); ok {
-	// 		switch pqErr.Code.Name() {
-	// 		case "unique_violation":
-	// 			return logError(status.Errorf(codes.AlreadyExists, "file already exists: %s", err))
-	// 		}
-	// 	}
-	// 	return logError(status.Errorf(codes.Internal, "failed to create file: Err: %s", err))
-	// }
+	file, err := s.fileStore.GetFile(ctx, arg)
+	if err != nil && err != sql.ErrNoRows {
+		return logError(status.Errorf(codes.Internal, "failed to find the file: Err: %s", err))
+	}
+	if file.Filename != "" {
+		return logError(status.Errorf(codes.AlreadyExists, "file already exists"))
+	}
 
 	fileData := bytes.Buffer{}
 	fileSize := 0
 
-	err = func() error {
-		for {
-			err := contextError(stream.Context())
-			if err != nil {
-				return err
-			}
-			log.Info().Msg("waiting to receive more filedata")
-
-			req, err := stream.Recv()
-			if err == io.EOF {
-				log.Print("no more data")
-				break
-			}
-			if err != nil {
-				return logError(status.Errorf(codes.Unknown, "cannot receive chunk data: %v", err))
-			}
-
-			chunk := req.GetChunkData()
-			size := len(chunk)
-
-			log.Printf("received a chunk with size: %d", size)
-
-			fileSize += size
-			if fileSize > maxImageSize {
-				return logError(status.Errorf(codes.InvalidArgument, "image is too large: %d > %d", fileSize, maxImageSize))
-			}
-
-			_, err = fileData.Write(chunk)
-			if err != nil {
-				return logError(status.Errorf(codes.Internal, "cannot write chunk data: %v", err))
-			}
+	for {
+		err := contextError(stream.Context())
+		if err != nil {
+			return err
 		}
-		return nil
-	}()
-	if err != nil {
-		errChan <- err
-		return err
-	}
-	// if err != nil {
-	// 	argDelete := db.DeleteFileParams{
-	// 		Filename:  arg.Filename,
-	// 		AccountID: arg.AccountID,
-	// 	}
-	// 	err = s.fileStore.DeleteFile(ctx, argDelete)
-	// 	if err != nil {
-	// 		return logError(status.Errorf(codes.Internal, "cannot delete file record from db: %v", err))
-	// 	}
-	// 	return err
-	// }
+		log.Info().Msg("waiting to receive more filedata")
 
-	err = s.fileContentSaver.Save(req.GetInfo().Filename, req.GetInfo().Filepath, fileData)
+		req, err := stream.Recv()
+		if err == io.EOF {
+			log.Print("no more data")
+			break
+		}
+		if err != nil {
+			return logError(status.Errorf(codes.Unknown, "cannot receive chunk data: %v", err))
+		}
+
+		chunk := req.GetChunkData()
+		size := len(chunk)
+
+		log.Printf("received a chunk with size: %d", size)
+
+		fileSize += size
+		if fileSize > maxImageSize {
+			return logError(status.Errorf(codes.InvalidArgument, "image is too large: %d > %d", fileSize, maxImageSize))
+		}
+
+		_, err = fileData.Write(chunk)
+		if err != nil {
+			return logError(status.Errorf(codes.Internal, "cannot write chunk data: %v", err))
+		}
+	}
+
+	fsFilepath := fmt.Sprintf("%s/%s", account.Username, filepath)
+	err = s.fileContentSaver.Save(ctx, filename, fsFilepath, fileData)
 	if err != nil {
-		errChan <- err
 		return logError(status.Errorf(codes.Internal, "cannot save file content to storage: %v", err))
 	}
 
-	errChan <- nil
+	argCreateFile := db.CreateFileParams{
+		AccountID: account.ID,
+		Filename:  filename,
+		Filepath:  filepath,
+		Filesize:  int64(fileSize),
+	}
+
+	newFile, err := s.fileStore.CreateFile(ctx, argCreateFile)
+	if err != nil {
+		if pqErr, ok := err.(*pq.Error); ok {
+			switch pqErr.Code.Name() {
+			case "unique_violation":
+				return logError(status.Errorf(codes.AlreadyExists, "Secret already exists: %s", err))
+			}
+		}
+		return logError(status.Errorf(codes.Internal, "failed to create secret: Err: %s", err))
+	}
 
 	res := &pb.CreateFileResponse{
 		Info: &pb.FileInfo{
-			Filename: req.GetInfo().Filename,
-			Filepath: req.GetInfo().Filepath,
+			Filename: newFile.Filename,
+			Filepath: newFile.Filepath,
+			Size:     toUint64Ref(newFile.Filesize),
 		},
-		Size: uint32(fileSize),
 	}
 
 	err = stream.SendAndClose(res)
@@ -155,26 +141,55 @@ func (s *FileServer) CreateFile(stream pb.File_CreateFileServer) error {
 		return logError(status.Errorf(codes.Unknown, "cannot send response: %v", err))
 	}
 
-	log.Info().Msgf("Created file '/%s/%s' with size %s", file.Filename, arg.Filepath, fileSize)
+	log.Info().Msgf("Created file '/%s/%s' with size %s", filename, filepath, fileSize)
 	return nil
 }
 
-func (s *FileServer) UpdateFile(stream pb.File_UpdateFileServer) error {
-	return status.Errorf(codes.Unimplemented, "method UpdateFile not implemented")
+// DeleteFile deletes file from storage.
+func (s *FileServer) DeleteFile(ctx context.Context, in *pb.DeleteFileRequest) (*pb.DeleteFileResponse, error) {
+	account, err := findAccount(ctx, s.fileStore)
+	if err != nil {
+		return nil, logError(status.Errorf(codes.Internal, "cannot get account from db. Err :%s", err))
+	}
+
+	log.Info().Msgf("receive an DeleteFile request from user %s", account.Username)
+
+	arg := db.DeleteFileParams{
+		Filename:  in.Info.Filename,
+		Filepath:  in.Info.Filepath,
+		AccountID: account.ID,
+	}
+
+	err = s.fileStore.DeleteFile(ctx, arg)
+	if err != nil {
+		return nil, logError(status.Errorf(codes.Internal, "cannot delete file from db. Err :%s", err))
+	}
+
+	resp := &pb.DeleteFileResponse{
+		Info: &pb.FileInfo{
+			Filename: in.Info.Filename,
+			Filepath: in.Info.Filepath,
+		},
+	}
+	return resp, nil
 }
 
-func (s *FileServer) DeleteFile(context.Context, *pb.DeleteFileRequest) (*pb.DeleteFileResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteFile not implemented")
+// UpdateFileName allows to change file name.
+func (s *FileServer) UpdateFileName(context.Context, *pb.UpdateFileRequest) (*pb.UpdateFileResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateFileName not implemented")
 }
 
+// GetFile returns a file.
 func (s *FileServer) GetFile(*pb.GetFileRequest, pb.File_GetFileServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetFile not implemented")
 }
 
-func (s *FileServer) ListFile(context.Context, *pb.ListFileRequest) (*pb.ListFileResponse, error) {
+// ListFiles lists all files belong to user.
+func (s *FileServer) ListFiles(context.Context, *pb.ListFilesRequest) (*pb.ListFilesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListFile not implemented")
 }
 
+// contextError handles context events.
 func contextError(ctx context.Context) error {
 	switch ctx.Err() {
 	case context.Canceled:
@@ -186,10 +201,51 @@ func contextError(ctx context.Context) error {
 	}
 }
 
+func (s *FileServer) ClearFileStorage(ctx context.Context) {
+	ticker := time.NewTicker(time.Second * 10)
+	for {
+		select {
+		case <-ticker.C:
+			log.Info().Msg("Running garbage collector for deleted files.")
+
+			deletedFiles, err := s.fileStore.GetDeletedFiles(ctx)
+			if err != nil {
+				log.Error().Msgf("could not get deleted files from db. Err: %s", err)
+			}
+
+			for _, file := range deletedFiles {
+				filepath := fmt.Sprintf("%s/%s", file.Username, file.Filepath)
+				err := s.fileContentSaver.Delete(ctx, file.Filename, filepath)
+				if err != nil {
+					log.Error().Msgf("could not delete file '%s' at path '%s'", file.Filename, filepath)
+					continue
+				}
+
+				err = s.fileStore.DeletedFileById(ctx, file.ID)
+				if err != nil {
+					log.Error().Msgf("could not delete file with ID '%d' from db", file.ID)
+					continue
+				}
+
+				log.Info().Msgf("Deleted file '%s' at path '%s'", file.Filename, filepath)
+			}
+
+		case <-ctx.Done():
+			log.Info().Msg("ClearFileStorage has been canceled successfully.")
+			return
+		}
+	}
+}
+
 // logError returns formatted error.
 func logError(err error) error {
 	if err != nil {
 		log.Error().Err(err).Msg("")
 	}
 	return err
+}
+
+func toUint64Ref(i int64) *uint64 {
+	ii := uint64(i)
+	return &ii
 }

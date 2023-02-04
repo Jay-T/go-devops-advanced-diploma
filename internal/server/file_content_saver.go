@@ -2,13 +2,17 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"os"
+
+	"github.com/rs/zerolog/log"
 )
 
 type FileContentSaver interface {
-	Save(filename string, filepath string, fileData bytes.Buffer) error
+	Save(ctx context.Context, filename string, filepath string, fileData bytes.Buffer) error
+	Delete(ctx context.Context, filename string, filepath string) error
 }
 
 type DiskFileContentSaver struct {
@@ -19,11 +23,11 @@ func NewDiskFileContentSaver(fileFolder string) FileContentSaver {
 	return &DiskFileContentSaver{fileFolder: fileFolder}
 }
 
-func (fs *DiskFileContentSaver) Save(filename string, filepath string, fileData bytes.Buffer) error {
+func (fs *DiskFileContentSaver) Save(ctx context.Context, filename string, filepath string, fileData bytes.Buffer) error {
 	path := fmt.Sprintf("%s/%s", fs.fileFolder, filepath)
 
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
-		err := os.Mkdir(path, os.ModePerm)
+		err := os.MkdirAll(path, os.ModePerm)
 		if err != nil {
 			return fmt.Errorf("cannot create directory: %w", err)
 		}
@@ -39,5 +43,17 @@ func (fs *DiskFileContentSaver) Save(filename string, filepath string, fileData 
 	if err != nil {
 		return fmt.Errorf("cannot write image to file: %w", err)
 	}
+	return nil
+}
+
+func (fs *DiskFileContentSaver) Delete(ctx context.Context, filename string, filepath string) error {
+	file := fmt.Sprintf("%s/%s/%s", fs.fileFolder, filepath, filename)
+	log.Debug().Msg(file)
+
+	err := os.Remove(file)
+	if err != nil {
+		return nil
+	}
+
 	return nil
 }

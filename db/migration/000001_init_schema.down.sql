@@ -1,5 +1,4 @@
-DROP TABLE IF EXISTS files_metadata;
+DROP TABLE IF EXISTS metadata;
 DROP TABLE IF EXISTS files;
-DROP TABLE IF EXISTS secrets_metadata;
 DROP TABLE IF EXISTS secrets;
 DROP TABLE IF EXISTS account;

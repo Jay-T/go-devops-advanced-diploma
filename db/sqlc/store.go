@@ -8,7 +8,7 @@ import (
 
 type Store interface {
 	Querier
-	CreateFileTx(ctx context.Context, arg CreateFileParams, errChan <-chan error) (File, error)
+	CreateFileTx(ctx context.Context, arg CreateFileParams, errChan chan error) (File, error)
 }
 
 type SQLStore struct {

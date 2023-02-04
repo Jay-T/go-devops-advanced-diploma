@@ -21,6 +21,8 @@ type File struct {
 	AccountID int64     `json:"account_id"`
 	Filename  string    `json:"filename"`
 	Filepath  string    `json:"filepath"`
+	Filesize  int64     `json:"filesize"`
+	Deleted   bool      `json:"deleted"`
 	CreatedAt time.Time `json:"created_at"`
 }
 

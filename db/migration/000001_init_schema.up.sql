@@ -19,6 +19,8 @@ CREATE TABLE "files" (
   "account_id" bigint NOT NULL,
   "filename" varchar NOT NULL,
   "filepath" varchar NOT NULL,
+  "filesize" bigint NOT NULL,
+  "deleted" bool NOT NULL DEFAULT False,
   "created_at" timestamptz NOT NULL DEFAULT (now())
 );
 

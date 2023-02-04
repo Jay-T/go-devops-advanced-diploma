@@ -79,6 +79,21 @@ func (mr *MockStoreMockRecorder) CreateFile(arg0, arg1 interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateFile", reflect.TypeOf((*MockStore)(nil).CreateFile), arg0, arg1)
 }
 
+// CreateFileTx mocks base method.
+func (m *MockStore) CreateFileTx(arg0 context.Context, arg1 db.CreateFileParams, arg2 chan error) (db.File, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateFileTx", arg0, arg1, arg2)
+	ret0, _ := ret[0].(db.File)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateFileTx indicates an expected call of CreateFileTx.
+func (mr *MockStoreMockRecorder) CreateFileTx(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateFileTx", reflect.TypeOf((*MockStore)(nil).CreateFileTx), arg0, arg1, arg2)
+}
+
 // CreateSecret mocks base method.
 func (m *MockStore) CreateSecret(arg0 context.Context, arg1 db.CreateSecretParams) (db.Secret, error) {
 	m.ctrl.T.Helper()

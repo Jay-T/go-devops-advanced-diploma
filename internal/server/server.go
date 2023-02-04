@@ -89,7 +89,7 @@ func (s *GRPCServer) StartServer(ctx context.Context) {
 	cryptoService := crypto.NewCryptoService(cypherKey)
 
 	secretServer := NewSecretServer(s.store, cryptoService)
-	fileServer := NewFileServer(s.store)
+	fileServer := NewFileServer(ctx, s.store)
 
 	serverOptions := []grpc.ServerOption{
 		grpc.UnaryInterceptor(interceptor.Unary()),

@@ -9,8 +9,9 @@ import "common_messages.proto";
 message FileInfo {
     string filepath = 1;
     string filename = 2;
-    repeated Metadata metadata = 3;
-    optional google.protobuf.Timestamp created_at = 4;
+    optional uint64 size = 3;
+    repeated Metadata metadata = 4;
+    optional google.protobuf.Timestamp created_at = 5;
 }
 
 message CreateFileRequest {
@@ -22,7 +23,6 @@ message CreateFileRequest {
 
 message CreateFileResponse {
     FileInfo info = 1;
-    uint32 size = 2;
 }
 
 message UpdateFileRequest {
@@ -55,10 +55,10 @@ message GetFileResponse {
     };
 }
 
-message ListFileRequest {
+message ListFilesRequest {
     FileInfo info = 1;
 }
 
-message ListFileResponse {
+message ListFilesResponse {
     repeated FileInfo info = 1;
 }

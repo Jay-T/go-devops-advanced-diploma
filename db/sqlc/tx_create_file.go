@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (store *SQLStore) CreateFileTx(ctx context.Context, arg CreateFileParams, errChan <-chan error) (File, error) {
+func (store *SQLStore) CreateFileTx(ctx context.Context, arg CreateFileParams, errChan chan error) (File, error) {
 	var file File
 
 	err := store.execTx(ctx, func(q *Queries) error {
@@ -24,9 +24,6 @@ func (store *SQLStore) CreateFileTx(ctx context.Context, arg CreateFileParams, e
 			}
 			return status.Errorf(codes.Internal, "failed to create file: Err: %s", err)
 		}
-
-		err = <-errChan
-
 		return err
 	})
 

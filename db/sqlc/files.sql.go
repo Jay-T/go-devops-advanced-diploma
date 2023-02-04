@@ -13,73 +13,138 @@ const createFile = `-- name: CreateFile :one
 INSERT INTO files (
   account_id,
   filename,
-  filepath
+  filepath,
+  filesize
 ) VALUES (
-  $1, $2, $3
+  $1, $2, $3, $4
 )
-RETURNING id, account_id, filename, filepath, created_at
+RETURNING id, account_id, filename, filepath, filesize, deleted, created_at
 `
 
 type CreateFileParams struct {
 	AccountID int64  `json:"account_id"`
 	Filename  string `json:"filename"`
 	Filepath  string `json:"filepath"`
+	Filesize  int64  `json:"filesize"`
 }
 
 func (q *Queries) CreateFile(ctx context.Context, arg CreateFileParams) (File, error) {
-	row := q.db.QueryRowContext(ctx, createFile, arg.AccountID, arg.Filename, arg.Filepath)
+	row := q.db.QueryRowContext(ctx, createFile,
+		arg.AccountID,
+		arg.Filename,
+		arg.Filepath,
+		arg.Filesize,
+	)
 	var i File
 	err := row.Scan(
 		&i.ID,
 		&i.AccountID,
 		&i.Filename,
 		&i.Filepath,
+		&i.Filesize,
+		&i.Deleted,
 		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const deleteFile = `-- name: DeleteFile :exec
-DELETE FROM files
-WHERE filename = $1 and account_id = $2
+UPDATE files
+  set deleted = true
+WHERE filename = $1 and filepath = $2 and account_id = $3
 `
 
 type DeleteFileParams struct {
 	Filename  string `json:"filename"`
+	Filepath  string `json:"filepath"`
 	AccountID int64  `json:"account_id"`
 }
 
 func (q *Queries) DeleteFile(ctx context.Context, arg DeleteFileParams) error {
-	_, err := q.db.ExecContext(ctx, deleteFile, arg.Filename, arg.AccountID)
+	_, err := q.db.ExecContext(ctx, deleteFile, arg.Filename, arg.Filepath, arg.AccountID)
 	return err
 }
 
+const deletedFileById = `-- name: DeletedFileById :exec
+DELETE FROM files
+WHERE id = $1
+`
+
+func (q *Queries) DeletedFileById(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deletedFileById, id)
+	return err
+}
+
+const getDeletedFiles = `-- name: GetDeletedFiles :many
+SELECT f.id, f.filename, f.filepath, a.username 
+FROM files f JOIN account a ON f.account_id = a.id
+WHERE f.deleted = true
+`
+
+type GetDeletedFilesRow struct {
+	ID       int64  `json:"id"`
+	Filename string `json:"filename"`
+	Filepath string `json:"filepath"`
+	Username string `json:"username"`
+}
+
+func (q *Queries) GetDeletedFiles(ctx context.Context) ([]GetDeletedFilesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getDeletedFiles)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetDeletedFilesRow
+	for rows.Next() {
+		var i GetDeletedFilesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Filename,
+			&i.Filepath,
+			&i.Username,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getFile = `-- name: GetFile :one
-SELECT id, account_id, filename, filepath, created_at FROM files
-WHERE filename = $1 and account_id = $2 LIMIT 1
+SELECT id, account_id, filename, filepath, filesize, deleted, created_at FROM files
+WHERE filename = $1 and filepath = $2 and account_id = $3 and deleted = false LIMIT 1
 `
 
 type GetFileParams struct {
 	Filename  string `json:"filename"`
+	Filepath  string `json:"filepath"`
 	AccountID int64  `json:"account_id"`
 }
 
 func (q *Queries) GetFile(ctx context.Context, arg GetFileParams) (File, error) {
-	row := q.db.QueryRowContext(ctx, getFile, arg.Filename, arg.AccountID)
+	row := q.db.QueryRowContext(ctx, getFile, arg.Filename, arg.Filepath, arg.AccountID)
 	var i File
 	err := row.Scan(
 		&i.ID,
 		&i.AccountID,
 		&i.Filename,
 		&i.Filepath,
+		&i.Filesize,
+		&i.Deleted,
 		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const listFiles = `-- name: ListFiles :many
-SELECT id, account_id, filename, filepath, created_at FROM files
-WHERE account_id = $1 
+SELECT id, account_id, filename, filepath, filesize, deleted, created_at FROM files
+WHERE account_id = $1 and deleted = false 
 ORDER BY filename
 `
 
@@ -97,6 +162,8 @@ func (q *Queries) ListFiles(ctx context.Context, accountID int64) ([]File, error
 			&i.AccountID,
 			&i.Filename,
 			&i.Filepath,
+			&i.Filesize,
+			&i.Deleted,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err
@@ -112,19 +179,25 @@ func (q *Queries) ListFiles(ctx context.Context, accountID int64) ([]File, error
 	return items, nil
 }
 
-const updateFilePath = `-- name: UpdateFilePath :exec
+const updateFileName = `-- name: UpdateFileName :exec
 UPDATE files
-  set filepath = $3
-WHERE filename = $1 and account_id = $2
+  set filename = $4
+WHERE filename = $1 and filepath = $2 and account_id = $3 and deleted = false
 `
 
-type UpdateFilePathParams struct {
-	Filename  string `json:"filename"`
-	AccountID int64  `json:"account_id"`
-	Filepath  string `json:"filepath"`
+type UpdateFileNameParams struct {
+	Filename   string `json:"filename"`
+	Filepath   string `json:"filepath"`
+	AccountID  int64  `json:"account_id"`
+	Filename_2 string `json:"filename_2"`
 }
 
-func (q *Queries) UpdateFilePath(ctx context.Context, arg UpdateFilePathParams) error {
-	_, err := q.db.ExecContext(ctx, updateFilePath, arg.Filename, arg.AccountID, arg.Filepath)
+func (q *Queries) UpdateFileName(ctx context.Context, arg UpdateFileNameParams) error {
+	_, err := q.db.ExecContext(ctx, updateFileName,
+		arg.Filename,
+		arg.Filepath,
+		arg.AccountID,
+		arg.Filename_2,
+	)
 	return err
 }
