@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"database/sql"
@@ -261,9 +262,102 @@ func (s *FileServer) ListFiles(ctx context.Context, in *emptypb.Empty) (*pb.List
 	}, nil
 }
 
-// GetFile returns a file.
-func (s *FileServer) GetFile(*pb.GetFileRequest, pb.File_GetFileServer) error {
-	return status.Errorf(codes.Unimplemented, "method GetFile not implemented")
+// GetFileInfo returns file info.
+func (s *FileServer) GetFileInfo(ctx context.Context, in *pb.GetFileInfoRequest) (*pb.GetFileInfoResponse, error) {
+	account, err := findAccount(ctx, s.fileStore)
+	if err != nil {
+		return nil, logError(status.Errorf(codes.Internal, "cannot get account from db. Err :%s", err))
+	}
+
+	log.Info().Msgf("receive an GetFileInfo request from user %s", account.Username)
+
+	args := db.GetFileParams{
+		Filename:  in.Info.GetFilename(),
+		Filepath:  in.Info.GetFilepath(),
+		AccountID: account.ID,
+	}
+
+	file, err := s.fileStore.GetFile(ctx, args)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			return nil, logError(status.Errorf(codes.NotFound, "file not found."))
+		}
+		return nil, logError(status.Errorf(codes.Internal, "cannot get file info from db. Err :%s", err))
+	}
+
+	fileInfo := &pb.FileInfo{
+		Filename:  file.Filename,
+		Filepath:  file.Filepath,
+		Size:      toUint64Ref(file.Filesize),
+		CreatedAt: timestamppb.New(file.CreatedAt),
+	}
+
+	resp := &pb.GetFileInfoResponse{
+		Info: fileInfo,
+	}
+
+	return resp, nil
+}
+
+// DownloadFile returns requested file content.
+func (s *FileServer) DownloadFile(in *pb.DownloadFileRequest, stream pb.File_DownloadFileServer) error {
+	ctx := stream.Context()
+	account, err := findAccount(ctx, s.fileStore)
+	if err != nil {
+		return logError(status.Errorf(codes.Internal, "cannot get account from db. Err :%s", err))
+	}
+
+	log.Info().Msgf("receive an DownloadFile request from user %s", account.Username)
+
+	filename := in.Info.GetFilename()
+	filepath := in.Info.GetFilepath()
+
+	argFileInfo := db.GetFileParams{
+		Filename:  filename,
+		Filepath:  filepath,
+		AccountID: account.ID,
+	}
+	fileInfo, err := s.fileStore.GetFile(ctx, argFileInfo)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return logError(status.Errorf(codes.NotFound, "file not found."))
+		}
+		return logError(status.Errorf(codes.Internal, "cannot get file info from db. Err :%s", err))
+	}
+
+	pathFS := fmt.Sprintf("%s/%s", account.Username, fileInfo.Filepath)
+	file, err := s.fileContentSaver.Find(ctx, fileInfo.Filename, pathFS)
+	if err != nil {
+		return logError(status.Errorf(codes.Internal, "cannot read file. Err :%s", err))
+	}
+	defer file.Close()
+
+	reader := bufio.NewReader(file)
+	buffer := make([]byte, 1024)
+
+	for {
+		n, err := reader.Read(buffer)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return logError(status.Errorf(codes.Internal, "error reading file content. Err :%s", err))
+		}
+
+		resp := &pb.DownloadFileResponse{
+			ChunkData: buffer[:n],
+			BytesSent: int32(len(buffer[:n])),
+		}
+
+		err = stream.Send(resp)
+		if err != nil {
+			return logError(status.Errorf(codes.Internal, "cannot send chunk to client: %s, %s", err, stream.RecvMsg(nil)))
+		}
+	}
+
+	log.Info().Msgf("finished sending file '%s' to client", fileInfo.Filename)
+
+	return nil
 }
 
 // contextError handles context events.
@@ -278,6 +372,7 @@ func contextError(ctx context.Context) error {
 	}
 }
 
+// ClearFileStorage deletes files from storage which marked as deleted=true in DB.
 func (s *FileServer) ClearFileStorage(ctx context.Context) {
 	ticker := time.NewTicker(time.Second * 10)
 	for {

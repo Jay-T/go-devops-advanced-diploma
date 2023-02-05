@@ -26,6 +26,7 @@ service File {
     rpc CreateFile(stream CreateFileRequest) returns (CreateFileResponse) {}
     rpc UpdateFileName(UpdateFileNameRequest) returns (UpdateFileNameResponse) {}
     rpc DeleteFile(DeleteFileRequest) returns (DeleteFileResponse) {}
-    rpc GetFile(GetFileRequest) returns (stream GetFileResponse) {}
+    rpc GetFileInfo(GetFileInfoRequest) returns (GetFileInfoResponse) {}
+    rpc DownloadFile(DownloadFileRequest) returns (stream DownloadFileResponse) {}
     rpc ListFiles(google.protobuf.Empty) returns (ListFilesResponse) {}
 }

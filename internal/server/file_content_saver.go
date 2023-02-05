@@ -14,6 +14,7 @@ type FileContentSaver interface {
 	Save(ctx context.Context, filename string, filepath string, fileData bytes.Buffer) error
 	Delete(ctx context.Context, filename string, filepath string) error
 	Rename(ctx context.Context, oldName string, newName string, pathname string) error
+	Find(ctx context.Context, filename string, filepath string) (*os.File, error)
 }
 
 type DiskFileContentSaver struct {
@@ -73,4 +74,18 @@ func (fs *DiskFileContentSaver) Rename(
 	}
 
 	return nil
+}
+
+func (fs *DiskFileContentSaver) Find(
+	ctx context.Context,
+	filename string,
+	filepath string,
+) (*os.File, error) {
+	fileName := fmt.Sprintf("%s/%s/%s", fs.fileFolder, filepath, filename)
+	file, err := os.Open(fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	return file, nil
 }

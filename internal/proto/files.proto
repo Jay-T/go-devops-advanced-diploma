@@ -43,16 +43,23 @@ message DeleteFileResponse {
     FileInfo info = 1;
 }
 
-message GetFileRequest {
-    FileInfo key = 1;
+message GetFileInfoRequest {
+    FileInfo info = 1;
 }
 
-message GetFileResponse {
-    oneof data {
-        FileInfo info = 1;
-        bytes chunk_data = 2;
-    };
+message GetFileInfoResponse {
+    FileInfo info = 1;
 }
+
+message DownloadFileRequest {
+    FileInfo info = 1;
+}
+
+message DownloadFileResponse {
+    bytes chunk_data = 1;
+    int32 bytes_sent = 3;
+}
+
 
 message ListFilesResponse {
     repeated FileInfo info = 1;

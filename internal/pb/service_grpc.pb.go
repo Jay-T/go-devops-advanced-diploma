@@ -378,7 +378,8 @@ type FileClient interface {
 	CreateFile(ctx context.Context, opts ...grpc.CallOption) (File_CreateFileClient, error)
 	UpdateFileName(ctx context.Context, in *UpdateFileNameRequest, opts ...grpc.CallOption) (*UpdateFileNameResponse, error)
 	DeleteFile(ctx context.Context, in *DeleteFileRequest, opts ...grpc.CallOption) (*DeleteFileResponse, error)
-	GetFile(ctx context.Context, in *GetFileRequest, opts ...grpc.CallOption) (File_GetFileClient, error)
+	GetFileInfo(ctx context.Context, in *GetFileInfoRequest, opts ...grpc.CallOption) (*GetFileInfoResponse, error)
+	DownloadFile(ctx context.Context, in *DownloadFileRequest, opts ...grpc.CallOption) (File_DownloadFileClient, error)
 	ListFiles(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListFilesResponse, error)
 }
 
@@ -442,12 +443,21 @@ func (c *fileClient) DeleteFile(ctx context.Context, in *DeleteFileRequest, opts
 	return out, nil
 }
 
-func (c *fileClient) GetFile(ctx context.Context, in *GetFileRequest, opts ...grpc.CallOption) (File_GetFileClient, error) {
-	stream, err := c.cc.NewStream(ctx, &File_ServiceDesc.Streams[1], "/go_devops_advanced_diploma.File/GetFile", opts...)
+func (c *fileClient) GetFileInfo(ctx context.Context, in *GetFileInfoRequest, opts ...grpc.CallOption) (*GetFileInfoResponse, error) {
+	out := new(GetFileInfoResponse)
+	err := c.cc.Invoke(ctx, "/go_devops_advanced_diploma.File/GetFileInfo", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &fileGetFileClient{stream}
+	return out, nil
+}
+
+func (c *fileClient) DownloadFile(ctx context.Context, in *DownloadFileRequest, opts ...grpc.CallOption) (File_DownloadFileClient, error) {
+	stream, err := c.cc.NewStream(ctx, &File_ServiceDesc.Streams[1], "/go_devops_advanced_diploma.File/DownloadFile", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &fileDownloadFileClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -457,17 +467,17 @@ func (c *fileClient) GetFile(ctx context.Context, in *GetFileRequest, opts ...gr
 	return x, nil
 }
 
-type File_GetFileClient interface {
-	Recv() (*GetFileResponse, error)
+type File_DownloadFileClient interface {
+	Recv() (*DownloadFileResponse, error)
 	grpc.ClientStream
 }
 
-type fileGetFileClient struct {
+type fileDownloadFileClient struct {
 	grpc.ClientStream
 }
 
-func (x *fileGetFileClient) Recv() (*GetFileResponse, error) {
-	m := new(GetFileResponse)
+func (x *fileDownloadFileClient) Recv() (*DownloadFileResponse, error) {
+	m := new(DownloadFileResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -490,7 +500,8 @@ type FileServer interface {
 	CreateFile(File_CreateFileServer) error
 	UpdateFileName(context.Context, *UpdateFileNameRequest) (*UpdateFileNameResponse, error)
 	DeleteFile(context.Context, *DeleteFileRequest) (*DeleteFileResponse, error)
-	GetFile(*GetFileRequest, File_GetFileServer) error
+	GetFileInfo(context.Context, *GetFileInfoRequest) (*GetFileInfoResponse, error)
+	DownloadFile(*DownloadFileRequest, File_DownloadFileServer) error
 	ListFiles(context.Context, *emptypb.Empty) (*ListFilesResponse, error)
 	mustEmbedUnimplementedFileServer()
 }
@@ -508,8 +519,11 @@ func (UnimplementedFileServer) UpdateFileName(context.Context, *UpdateFileNameRe
 func (UnimplementedFileServer) DeleteFile(context.Context, *DeleteFileRequest) (*DeleteFileResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteFile not implemented")
 }
-func (UnimplementedFileServer) GetFile(*GetFileRequest, File_GetFileServer) error {
-	return status.Errorf(codes.Unimplemented, "method GetFile not implemented")
+func (UnimplementedFileServer) GetFileInfo(context.Context, *GetFileInfoRequest) (*GetFileInfoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFileInfo not implemented")
+}
+func (UnimplementedFileServer) DownloadFile(*DownloadFileRequest, File_DownloadFileServer) error {
+	return status.Errorf(codes.Unimplemented, "method DownloadFile not implemented")
 }
 func (UnimplementedFileServer) ListFiles(context.Context, *emptypb.Empty) (*ListFilesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListFiles not implemented")
@@ -589,24 +603,42 @@ func _File_DeleteFile_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
-func _File_GetFile_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(GetFileRequest)
+func _File_GetFileInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFileInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileServer).GetFileInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/go_devops_advanced_diploma.File/GetFileInfo",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileServer).GetFileInfo(ctx, req.(*GetFileInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _File_DownloadFile_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(DownloadFileRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(FileServer).GetFile(m, &fileGetFileServer{stream})
+	return srv.(FileServer).DownloadFile(m, &fileDownloadFileServer{stream})
 }
 
-type File_GetFileServer interface {
-	Send(*GetFileResponse) error
+type File_DownloadFileServer interface {
+	Send(*DownloadFileResponse) error
 	grpc.ServerStream
 }
 
-type fileGetFileServer struct {
+type fileDownloadFileServer struct {
 	grpc.ServerStream
 }
 
-func (x *fileGetFileServer) Send(m *GetFileResponse) error {
+func (x *fileDownloadFileServer) Send(m *DownloadFileResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -644,6 +676,10 @@ var File_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _File_DeleteFile_Handler,
 		},
 		{
+			MethodName: "GetFileInfo",
+			Handler:    _File_GetFileInfo_Handler,
+		},
+		{
 			MethodName: "ListFiles",
 			Handler:    _File_ListFiles_Handler,
 		},
@@ -655,8 +691,8 @@ var File_ServiceDesc = grpc.ServiceDesc{
 			ClientStreams: true,
 		},
 		{
-			StreamName:    "GetFile",
-			Handler:       _File_GetFile_Handler,
+			StreamName:    "DownloadFile",
+			Handler:       _File_DownloadFile_Handler,
 			ServerStreams: true,
 		},
 	},
