@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/base32"
-	"encoding/base64"
 
 	db "github.com/Jay-T/go-devops-advanced-diploma/db/sqlc"
 	"github.com/Jay-T/go-devops-advanced-diploma/internal/crypto"
@@ -14,6 +13,11 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
+)
+
+const (
+	typeSecret string = "secret"
 )
 
 // getUsernameFromContext extracts username from incoming metadata.
@@ -80,9 +84,26 @@ func (s *SecretServer) CreateSecret(ctx context.Context, in *pb.CreateSecretRequ
 		return nil, logError(status.Errorf(codes.Internal, "failed to create secret: Err: %s", err))
 	}
 
+	metadataList := in.Data.GetMetadata()
+	if len(metadataList) != 0 {
+		for _, md := range metadataList {
+			argMD := db.CreateOrUpdateSecretMetadataParams{
+				SecretID: sqlInt64(secret.ID),
+				Key:      md.Key,
+				Value:    md.Value,
+			}
+			_, err := s.secretStore.CreateOrUpdateSecretMetadata(ctx, argMD)
+			if err != nil {
+				return nil, logError(status.Errorf(codes.Internal, "failed to create secret metadata: Err: %s", err))
+			}
+		}
+	}
+
 	message := &pb.SecretMessage{
-		Key:   secret.Key,
-		Value: string(secret.Value),
+		Key:       secret.Key,
+		Value:     string(secret.Value),
+		Metadata:  metadataList,
+		CreatedAt: timestamppb.New(secret.CreatedAt),
 	}
 
 	return &pb.CreateSecretResponse{
@@ -112,12 +133,17 @@ func (s *SecretServer) DeleteSecret(ctx context.Context, in *pb.DeleteSecretRequ
 		return nil, logError(status.Errorf(codes.Internal, "cannot get secret: Err: %s", err))
 	}
 
-	arg2 := db.DeleteSecretParams{
+	err = s.secretStore.DeleteAllSecretMetadata(ctx, sqlInt64(secret.ID))
+	if err != nil {
+		return nil, logError(status.Errorf(codes.Internal, "cannot delete secret metadata: Err: %s", err))
+	}
+
+	argDeleteSecret := db.DeleteSecretParams{
 		Key:       secret.Key,
 		AccountID: account.ID,
 	}
 
-	err = s.secretStore.DeleteSecret(ctx, arg2)
+	err = s.secretStore.DeleteSecret(ctx, argDeleteSecret)
 	if err != nil {
 		return nil, logError(status.Errorf(codes.Internal, "cannot delete secret db. Err: %s", err))
 	}
@@ -150,6 +176,11 @@ func (s *SecretServer) GetSecret(ctx context.Context, in *pb.GetSecretRequest) (
 		return nil, logError(status.Errorf(codes.Internal, "cannot get secret: Err: %s", err))
 	}
 
+	metadata, err := s.secretStore.ListSecretMetadata(ctx, sqlInt64(secret.ID))
+	if err != nil && err != sql.ErrNoRows {
+		return nil, logError(status.Errorf(codes.Internal, "cannot collect secret metadata. Err: %s", err))
+	}
+
 	masterKey := base32.StdEncoding.EncodeToString([]byte(in.Masterkey))
 
 	decipher, err := s.crypto.Decrypt(secret.Value, []byte(masterKey))
@@ -158,8 +189,10 @@ func (s *SecretServer) GetSecret(ctx context.Context, in *pb.GetSecretRequest) (
 	}
 
 	secretMSG := &pb.SecretMessage{
-		Key:   secret.Key,
-		Value: decipher,
+		Key:       secret.Key,
+		Value:     decipher,
+		Metadata:  convertToPBMetadata(metadata),
+		CreatedAt: timestamppb.New(secret.CreatedAt),
 	}
 
 	return &pb.GetSecretResponse{
@@ -196,9 +229,16 @@ func (s *SecretServer) ListSecret(ctx context.Context, in *pb.ListSecretRequest)
 			return nil, logError(status.Errorf(codes.Internal, "cannot decrypt the secret. Err: %s", err))
 		}
 
+		metadata, err := s.secretStore.ListSecretMetadata(ctx, sqlInt64(i.ID))
+		if err != nil && err != sql.ErrNoRows {
+			return nil, logError(status.Errorf(codes.Internal, "cannot collect secret metadata. Err: %s", err))
+		}
+
 		secretsList = append(secretsList, &pb.SecretMessage{
-			Key:   i.Key,
-			Value: decipher,
+			Key:       i.Key,
+			Value:     decipher,
+			Metadata:  convertToPBMetadata(metadata),
+			CreatedAt: timestamppb.New(i.CreatedAt),
 		})
 	}
 
@@ -216,12 +256,12 @@ func (s *SecretServer) UpdateSecret(ctx context.Context, in *pb.UpdateSecretRequ
 
 	log.Info().Msgf("Got UpdateSecret request for login '%s'", account.Username)
 
-	masterKey, err := base64.StdEncoding.DecodeString(in.Data.Masterkey)
+	masterKey := base32.StdEncoding.EncodeToString([]byte(in.Data.Masterkey))
 	if err != nil {
 		return nil, logError(status.Errorf(codes.Internal, "cannot decode masterkey. Err :%s", err))
 	}
 
-	cipher, err := s.crypto.Encrypt(in.Data.Value, masterKey)
+	cipher, err := s.crypto.Encrypt(in.Data.Value, []byte(masterKey))
 	if err != nil {
 		return nil, logError(status.Errorf(codes.Internal, "cannot encrypt the secret. Err :%s", err))
 	}
@@ -232,13 +272,52 @@ func (s *SecretServer) UpdateSecret(ctx context.Context, in *pb.UpdateSecretRequ
 		Value:     cipher,
 	}
 
-	if err := s.secretStore.UpdateSecret(ctx, arg); err != nil {
+	secret, err := s.secretStore.UpdateSecret(ctx, arg)
+	if err != nil {
 		return nil, logError(status.Errorf(codes.Internal, "cannot update the secret. Err :%s", err))
 	}
+
+	metadataList := in.Data.GetMetadata()
+	newMDList := []db.Metadatum{}
+	if len(metadataList) != 0 {
+		for _, md := range metadataList {
+			argMD := db.CreateOrUpdateSecretMetadataParams{
+				SecretID: sqlInt64(secret.ID),
+				Key:      md.Key,
+				Value:    md.Value,
+			}
+			newMD, err := s.secretStore.CreateOrUpdateSecretMetadata(ctx, argMD)
+			if err != nil {
+				return nil, logError(status.Errorf(codes.Internal, "failed to create secret metadata: Err: %s", err))
+			}
+			newMDList = append(newMDList, newMD)
+		}
+	}
+
 	return &pb.UpdateSecretResponse{
 		Data: &pb.SecretMessage{
-			Key:   in.Data.Key,
-			Value: in.Data.Value,
+			Key:       in.Data.Key,
+			Value:     in.Data.Value,
+			Metadata:  convertToPBMetadata(newMDList),
+			CreatedAt: timestamppb.New(secret.CreatedAt),
 		},
 	}, nil
+}
+
+func sqlInt64(i int64) sql.NullInt64 {
+	return sql.NullInt64{
+		Int64: i,
+		Valid: true,
+	}
+}
+
+func convertToPBMetadata(metadata []db.Metadatum) []*pb.Metadata {
+	pbMetadata := []*pb.Metadata{}
+	for _, md := range metadata {
+		pbMetadata = append(pbMetadata, &pb.Metadata{
+			Key:   md.Key,
+			Value: md.Value,
+		})
+	}
+	return pbMetadata
 }

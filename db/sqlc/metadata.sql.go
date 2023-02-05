@@ -7,43 +7,36 @@ package db
 
 import (
 	"context"
+	"database/sql"
 )
 
-const createSecretMetadata = `-- name: CreateSecretMetadata :one
+const createOrUpdateFileMetadata = `-- name: CreateOrUpdateFileMetadata :one
 INSERT INTO metadata (
-  obj_id,
-  obj_type,
-  account_id,
+  file_id,
   key,
   value
 ) VALUES (
-  $1, $2, $3, $4, $5
+  $1, $2, $3
 )
-RETURNING id, obj_id, obj_type, account_id, key, value, created_at
+ON CONFLICT(file_id, key) 
+DO UPDATE
+ set value = $3
+RETURNING id, secret_id, file_id, key, value, created_at
 `
 
-type CreateSecretMetadataParams struct {
-	ObjID     int64  `json:"obj_id"`
-	ObjType   string `json:"obj_type"`
-	AccountID int64  `json:"account_id"`
-	Key       string `json:"key"`
-	Value     string `json:"value"`
+type CreateOrUpdateFileMetadataParams struct {
+	FileID sql.NullInt64 `json:"file_id"`
+	Key    string        `json:"key"`
+	Value  string        `json:"value"`
 }
 
-func (q *Queries) CreateSecretMetadata(ctx context.Context, arg CreateSecretMetadataParams) (Metadatum, error) {
-	row := q.db.QueryRowContext(ctx, createSecretMetadata,
-		arg.ObjID,
-		arg.ObjType,
-		arg.AccountID,
-		arg.Key,
-		arg.Value,
-	)
+func (q *Queries) CreateOrUpdateFileMetadata(ctx context.Context, arg CreateOrUpdateFileMetadataParams) (Metadatum, error) {
+	row := q.db.QueryRowContext(ctx, createOrUpdateFileMetadata, arg.FileID, arg.Key, arg.Value)
 	var i Metadatum
 	err := row.Scan(
 		&i.ID,
-		&i.ObjID,
-		&i.ObjType,
-		&i.AccountID,
+		&i.SecretID,
+		&i.FileID,
 		&i.Key,
 		&i.Value,
 		&i.CreatedAt,
@@ -51,58 +44,98 @@ func (q *Queries) CreateSecretMetadata(ctx context.Context, arg CreateSecretMeta
 	return i, err
 }
 
-const deleteAllSecretMetadata = `-- name: DeleteAllSecretMetadata :exec
-DELETE FROM metadata
-WHERE obj_id = $1 and account_id = $2 and obj_type = $3
+const createOrUpdateSecretMetadata = `-- name: CreateOrUpdateSecretMetadata :one
+INSERT INTO metadata (
+  secret_id,
+  key,
+  value
+) VALUES (
+  $1, $2, $3
+)
+ON CONFLICT(secret_id, key) 
+DO UPDATE
+ set value = $3
+RETURNING id, secret_id, file_id, key, value, created_at
 `
 
-type DeleteAllSecretMetadataParams struct {
-	ObjID     int64  `json:"obj_id"`
-	AccountID int64  `json:"account_id"`
-	ObjType   string `json:"obj_type"`
+type CreateOrUpdateSecretMetadataParams struct {
+	SecretID sql.NullInt64 `json:"secret_id"`
+	Key      string        `json:"key"`
+	Value    string        `json:"value"`
 }
 
-func (q *Queries) DeleteAllSecretMetadata(ctx context.Context, arg DeleteAllSecretMetadataParams) error {
-	_, err := q.db.ExecContext(ctx, deleteAllSecretMetadata, arg.ObjID, arg.AccountID, arg.ObjType)
+func (q *Queries) CreateOrUpdateSecretMetadata(ctx context.Context, arg CreateOrUpdateSecretMetadataParams) (Metadatum, error) {
+	row := q.db.QueryRowContext(ctx, createOrUpdateSecretMetadata, arg.SecretID, arg.Key, arg.Value)
+	var i Metadatum
+	err := row.Scan(
+		&i.ID,
+		&i.SecretID,
+		&i.FileID,
+		&i.Key,
+		&i.Value,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const deleteAllFileMetadata = `-- name: DeleteAllFileMetadata :exec
+DELETE FROM metadata
+WHERE file_id = $1
+`
+
+func (q *Queries) DeleteAllFileMetadata(ctx context.Context, fileID sql.NullInt64) error {
+	_, err := q.db.ExecContext(ctx, deleteAllFileMetadata, fileID)
+	return err
+}
+
+const deleteAllSecretMetadata = `-- name: DeleteAllSecretMetadata :exec
+DELETE FROM metadata
+WHERE secret_id = $1
+`
+
+func (q *Queries) DeleteAllSecretMetadata(ctx context.Context, secretID sql.NullInt64) error {
+	_, err := q.db.ExecContext(ctx, deleteAllSecretMetadata, secretID)
+	return err
+}
+
+const deleteOneFileMetadata = `-- name: DeleteOneFileMetadata :exec
+DELETE FROM metadata
+WHERE file_id = $1 and key = $2
+`
+
+type DeleteOneFileMetadataParams struct {
+	FileID sql.NullInt64 `json:"file_id"`
+	Key    string        `json:"key"`
+}
+
+func (q *Queries) DeleteOneFileMetadata(ctx context.Context, arg DeleteOneFileMetadataParams) error {
+	_, err := q.db.ExecContext(ctx, deleteOneFileMetadata, arg.FileID, arg.Key)
 	return err
 }
 
 const deleteOneSecretMetadata = `-- name: DeleteOneSecretMetadata :exec
 DELETE FROM metadata
-WHERE obj_id = $1 and account_id = $2 and obj_type = $3 and key = $4
+WHERE secret_id = $1 and key = $2
 `
 
 type DeleteOneSecretMetadataParams struct {
-	ObjID     int64  `json:"obj_id"`
-	AccountID int64  `json:"account_id"`
-	ObjType   string `json:"obj_type"`
-	Key       string `json:"key"`
+	SecretID sql.NullInt64 `json:"secret_id"`
+	Key      string        `json:"key"`
 }
 
 func (q *Queries) DeleteOneSecretMetadata(ctx context.Context, arg DeleteOneSecretMetadataParams) error {
-	_, err := q.db.ExecContext(ctx, deleteOneSecretMetadata,
-		arg.ObjID,
-		arg.AccountID,
-		arg.ObjType,
-		arg.Key,
-	)
+	_, err := q.db.ExecContext(ctx, deleteOneSecretMetadata, arg.SecretID, arg.Key)
 	return err
 }
 
-const listSecretMetadata = `-- name: ListSecretMetadata :many
-SELECT id, obj_id, obj_type, account_id, key, value, created_at FROM metadata
-WHERE obj_id = $1 and account_id = $2 and obj_type = $3
+const listFileMetadata = `-- name: ListFileMetadata :many
+SELECT id, secret_id, file_id, key, value, created_at FROM metadata
+WHERE file_id = $1
 ORDER BY key
 `
 
-type ListSecretMetadataParams struct {
-	ObjID     int64  `json:"obj_id"`
-	AccountID int64  `json:"account_id"`
-	ObjType   string `json:"obj_type"`
-}
-
-func (q *Queries) ListSecretMetadata(ctx context.Context, arg ListSecretMetadataParams) ([]Metadatum, error) {
-	rows, err := q.db.QueryContext(ctx, listSecretMetadata, arg.ObjID, arg.AccountID, arg.ObjType)
+func (q *Queries) ListFileMetadata(ctx context.Context, fileID sql.NullInt64) ([]Metadatum, error) {
+	rows, err := q.db.QueryContext(ctx, listFileMetadata, fileID)
 	if err != nil {
 		return nil, err
 	}
@@ -112,9 +145,8 @@ func (q *Queries) ListSecretMetadata(ctx context.Context, arg ListSecretMetadata
 		var i Metadatum
 		if err := rows.Scan(
 			&i.ID,
-			&i.ObjID,
-			&i.ObjType,
-			&i.AccountID,
+			&i.SecretID,
+			&i.FileID,
 			&i.Key,
 			&i.Value,
 			&i.CreatedAt,
@@ -132,27 +164,38 @@ func (q *Queries) ListSecretMetadata(ctx context.Context, arg ListSecretMetadata
 	return items, nil
 }
 
-const updateSecretMetadata = `-- name: UpdateSecretMetadata :exec
-UPDATE metadata
-  set value = $5
-WHERE obj_id = $1 and account_id = $2 and obj_type = $3 and key = $4
+const listSecretMetadata = `-- name: ListSecretMetadata :many
+SELECT id, secret_id, file_id, key, value, created_at FROM metadata
+WHERE secret_id = $1 
+ORDER BY key
 `
 
-type UpdateSecretMetadataParams struct {
-	ObjID     int64  `json:"obj_id"`
-	AccountID int64  `json:"account_id"`
-	ObjType   string `json:"obj_type"`
-	Key       string `json:"key"`
-	Value     string `json:"value"`
-}
-
-func (q *Queries) UpdateSecretMetadata(ctx context.Context, arg UpdateSecretMetadataParams) error {
-	_, err := q.db.ExecContext(ctx, updateSecretMetadata,
-		arg.ObjID,
-		arg.AccountID,
-		arg.ObjType,
-		arg.Key,
-		arg.Value,
-	)
-	return err
+func (q *Queries) ListSecretMetadata(ctx context.Context, secretID sql.NullInt64) ([]Metadatum, error) {
+	rows, err := q.db.QueryContext(ctx, listSecretMetadata, secretID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Metadatum
+	for rows.Next() {
+		var i Metadatum
+		if err := rows.Scan(
+			&i.ID,
+			&i.SecretID,
+			&i.FileID,
+			&i.Key,
+			&i.Value,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

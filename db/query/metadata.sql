@@ -1,29 +1,51 @@
--- name: CreateSecretMetadata :one
+-- name: CreateOrUpdateSecretMetadata :one
 INSERT INTO metadata (
-  obj_id,
-  obj_type,
-  account_id,
+  secret_id,
   key,
   value
 ) VALUES (
-  $1, $2, $3, $4, $5
+  $1, $2, $3
 )
+ON CONFLICT(secret_id, key) 
+DO UPDATE
+ set value = $3
 RETURNING *;
 
--- name: UpdateSecretMetadata :exec
-UPDATE metadata
-  set value = $5
-WHERE obj_id = $1 and account_id = $2 and obj_type = $3 and key = $4;
+-- name: CreateOrUpdateFileMetadata :one
+INSERT INTO metadata (
+  file_id,
+  key,
+  value
+) VALUES (
+  $1, $2, $3
+)
+ON CONFLICT(file_id, key) 
+DO UPDATE
+ set value = $3
+RETURNING *;
 
 -- name: ListSecretMetadata :many
 SELECT * FROM metadata
-WHERE obj_id = $1 and account_id = $2 and obj_type = $3
+WHERE secret_id = $1 
+ORDER BY key;
+
+-- name: ListFileMetadata :many
+SELECT * FROM metadata
+WHERE file_id = $1
 ORDER BY key;
 
 -- name: DeleteOneSecretMetadata :exec
 DELETE FROM metadata
-WHERE obj_id = $1 and account_id = $2 and obj_type = $3 and key = $4;
+WHERE secret_id = $1 and key = $2;
+
+-- name: DeleteOneFileMetadata :exec
+DELETE FROM metadata
+WHERE file_id = $1 and key = $2;
 
 -- name: DeleteAllSecretMetadata :exec
 DELETE FROM metadata
-WHERE obj_id = $1 and account_id = $2 and obj_type = $3;
+WHERE secret_id = $1;
+
+-- name: DeleteAllFileMetadata :exec
+DELETE FROM metadata
+WHERE file_id = $1;

@@ -23,12 +23,14 @@ const (
 	maxImageSize = 1 << 10
 )
 
+// FileServer struct describes FileServer fields.
 type FileServer struct {
 	fileStore        db.Store
 	fileContentSaver FileContentSaver
 	pb.UnimplementedFileServer
 }
 
+// NewFileServer returns a FileServer instance.
 func NewFileServer(ctx context.Context, fileStore db.Store) *FileServer {
 	fileContentSaver := NewDiskFileContentSaver("fs")
 	s := &FileServer{
@@ -196,7 +198,7 @@ func (s *FileServer) UpdateFileName(ctx context.Context, in *pb.UpdateFileNameRe
 		Filepath:  path,
 	}
 
-	file, err := s.fileStore.GetFile(ctx, argGetFile)
+	_, err = s.fileStore.GetFile(ctx, argGetFile)
 	if err != nil {
 		return nil, logError(status.Errorf(codes.Internal, "failed to find the file: Err: %s", err))
 	}
@@ -214,17 +216,17 @@ func (s *FileServer) UpdateFileName(ctx context.Context, in *pb.UpdateFileNameRe
 		Filename_2: newName,
 	}
 
-	err = s.fileStore.UpdateFileName(ctx, arg)
+	fileAfterUpdate, err := s.fileStore.UpdateFileName(ctx, arg)
 	if err != nil {
 		return nil, logError(status.Errorf(codes.Internal, "cannot rename file in db. Err :%s", err))
 	}
 
 	resp := &pb.UpdateFileNameResponse{
 		Info: &pb.FileInfo{
-			Filename:  newName,
-			Filepath:  in.Info.Filepath,
-			Size:      toUint64Ref(file.Filesize),
-			CreatedAt: timestamppb.New(file.CreatedAt),
+			Filename:  fileAfterUpdate.Filename,
+			Filepath:  fileAfterUpdate.Filepath,
+			Size:      toUint64Ref(fileAfterUpdate.Filesize),
+			CreatedAt: timestamppb.New(fileAfterUpdate.CreatedAt),
 		},
 	}
 

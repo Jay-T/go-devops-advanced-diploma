@@ -5,6 +5,7 @@
 package db
 
 import (
+	"database/sql"
 	"time"
 )
 
@@ -27,13 +28,12 @@ type File struct {
 }
 
 type Metadatum struct {
-	ID        int64     `json:"id"`
-	ObjID     int64     `json:"obj_id"`
-	ObjType   string    `json:"obj_type"`
-	AccountID int64     `json:"account_id"`
-	Key       string    `json:"key"`
-	Value     string    `json:"value"`
-	CreatedAt time.Time `json:"created_at"`
+	ID        int64         `json:"id"`
+	SecretID  sql.NullInt64 `json:"secret_id"`
+	FileID    sql.NullInt64 `json:"file_id"`
+	Key       string        `json:"key"`
+	Value     string        `json:"value"`
+	CreatedAt time.Time     `json:"created_at"`
 }
 
 type Secret struct {

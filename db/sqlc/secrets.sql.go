@@ -112,10 +112,11 @@ func (q *Queries) ListSecrets(ctx context.Context, accountID int64) ([]Secret, e
 	return items, nil
 }
 
-const updateSecret = `-- name: UpdateSecret :exec
+const updateSecret = `-- name: UpdateSecret :one
 UPDATE secrets
   set value = $3
 WHERE key = $1 and account_id = $2
+RETURNING id, account_id, key, value, created_at
 `
 
 type UpdateSecretParams struct {
@@ -124,7 +125,15 @@ type UpdateSecretParams struct {
 	Value     string `json:"value"`
 }
 
-func (q *Queries) UpdateSecret(ctx context.Context, arg UpdateSecretParams) error {
-	_, err := q.db.ExecContext(ctx, updateSecret, arg.Key, arg.AccountID, arg.Value)
-	return err
+func (q *Queries) UpdateSecret(ctx context.Context, arg UpdateSecretParams) (Secret, error) {
+	row := q.db.QueryRowContext(ctx, updateSecret, arg.Key, arg.AccountID, arg.Value)
+	var i Secret
+	err := row.Scan(
+		&i.ID,
+		&i.AccountID,
+		&i.Key,
+		&i.Value,
+		&i.CreatedAt,
+	)
+	return i, err
 }

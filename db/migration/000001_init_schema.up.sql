@@ -26,9 +26,8 @@ CREATE TABLE "files" (
 
 CREATE TABLE "metadata" (
   "id" BIGSERIAL PRIMARY KEY,
-  "obj_id" bigint NOT NULL,
-  "obj_type" varchar NOT NULL,
-  "account_id" bigint NOT NULL,
+  "secret_id" bigint,
+  "file_id" bigint,
   "key" varchar NOT NULL,
   "value" varchar NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT (now())
@@ -46,10 +45,14 @@ CREATE INDEX ON "files" ("filepath");
 
 CREATE UNIQUE INDEX ON "files" ("account_id", "filepath", "filename");
 
+CREATE UNIQUE INDEX ON "metadata" ("secret_id", "key");
+
+CREATE UNIQUE INDEX ON "metadata" ("file_id", "key");
+
 ALTER TABLE "secrets" ADD FOREIGN KEY ("account_id") REFERENCES "account" ("id");
 
 ALTER TABLE "files" ADD FOREIGN KEY ("account_id") REFERENCES "account" ("id");
 
-ALTER TABLE "metadata" ADD FOREIGN KEY ("obj_id") REFERENCES "files" ("id");
+ALTER TABLE "metadata" ADD FOREIGN KEY ("file_id") REFERENCES "files" ("id");
 
-ALTER TABLE "metadata" ADD FOREIGN KEY ("obj_id") REFERENCES "secrets" ("id");
+ALTER TABLE "metadata" ADD FOREIGN KEY ("secret_id") REFERENCES "secrets" ("id");

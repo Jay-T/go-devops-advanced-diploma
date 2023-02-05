@@ -8,10 +8,11 @@ INSERT INTO secrets (
 )
 RETURNING *;
 
--- name: UpdateSecret :exec
+-- name: UpdateSecret :one
 UPDATE secrets
   set value = $3
-WHERE key = $1 and account_id = $2;
+WHERE key = $1 and account_id = $2
+RETURNING *;
 
 -- name: GetSecret :one
 SELECT * FROM secrets

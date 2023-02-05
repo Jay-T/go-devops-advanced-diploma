@@ -179,10 +179,11 @@ func (q *Queries) ListFiles(ctx context.Context, accountID int64) ([]File, error
 	return items, nil
 }
 
-const updateFileName = `-- name: UpdateFileName :exec
+const updateFileName = `-- name: UpdateFileName :one
 UPDATE files
   set filename = $4
 WHERE filename = $1 and filepath = $2 and account_id = $3 and deleted = false
+RETURNING id, account_id, filename, filepath, filesize, deleted, created_at
 `
 
 type UpdateFileNameParams struct {
@@ -192,12 +193,22 @@ type UpdateFileNameParams struct {
 	Filename_2 string `json:"filename_2"`
 }
 
-func (q *Queries) UpdateFileName(ctx context.Context, arg UpdateFileNameParams) error {
-	_, err := q.db.ExecContext(ctx, updateFileName,
+func (q *Queries) UpdateFileName(ctx context.Context, arg UpdateFileNameParams) (File, error) {
+	row := q.db.QueryRowContext(ctx, updateFileName,
 		arg.Filename,
 		arg.Filepath,
 		arg.AccountID,
 		arg.Filename_2,
 	)
-	return err
+	var i File
+	err := row.Scan(
+		&i.ID,
+		&i.AccountID,
+		&i.Filename,
+		&i.Filepath,
+		&i.Filesize,
+		&i.Deleted,
+		&i.CreatedAt,
+	)
+	return i, err
 }

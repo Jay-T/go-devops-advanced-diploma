@@ -9,10 +9,11 @@ INSERT INTO files (
 )
 RETURNING *;
 
--- name: UpdateFileName :exec
+-- name: UpdateFileName :one
 UPDATE files
   set filename = $4
-WHERE filename = $1 and filepath = $2 and account_id = $3 and deleted = false;
+WHERE filename = $1 and filepath = $2 and account_id = $3 and deleted = false
+RETURNING *;
 
 -- name: GetFile :one
 SELECT * FROM files
