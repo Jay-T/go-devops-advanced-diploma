@@ -16,6 +16,8 @@ const (
 	defaultDBAddress     string        = "postgres://localhost/mydb?sslmode=disable"
 	defaultTokenLifeTime time.Duration = time.Minute * 2
 	defaultConfig        string        = "config.json"
+	defaultSecretKey     string        = "secret_key"
+	defaultFSRoot        string        = "fs"
 )
 
 type Config struct {
@@ -24,12 +26,16 @@ type Config struct {
 	ConfigFile    string        `env:"CONFIG"`
 	TokenLifeTime time.Duration `env:"TOKEN_DURATION"`
 	Environment   string        `env:"ENVIRONMENT"`
+	SecretKey     string        `env:"SECRET_KEY"`
+	FSRoot        string        `env:"FSROOT"`
 }
 
 type ConfigFile struct {
 	Address       string        `json:"address"`
 	DBAddress     string        `json:"db_address"`
 	TokenLifeTime time.Duration `json:"token_duration"`
+	SecretKey     string        `json:"secret_key"`
+	FSRoot        string        `json:"filesystem_root"`
 }
 
 func (config *ConfigFile) UnmarshalJSON(b []byte) error {
@@ -85,6 +91,13 @@ func loadConfigFromFile(c *Config) error {
 		c.TokenLifeTime = cfgFromFile.TokenLifeTime
 	}
 
+	if c.SecretKey == defaultSecretKey && cfgFromFile.SecretKey != "" {
+		c.SecretKey = cfgFromFile.SecretKey
+	}
+
+	if c.FSRoot == defaultFSRoot && cfgFromFile.FSRoot != "" {
+		c.FSRoot = cfgFromFile.FSRoot
+	}
 	return nil
 }
 
@@ -94,6 +107,8 @@ func GetConfig() (*Config, error) {
 	flag.StringVar(&c.Address, "a", defaultAddress, "Socket to listen on")
 	flag.StringVar(&c.DBAddress, "d", defaultDBAddress, "Database address")
 	flag.DurationVar(&c.TokenLifeTime, "t", defaultTokenLifeTime, "User token lifetime duration")
+	flag.StringVar(&c.SecretKey, "s", defaultSecretKey, "Secret key for token generation")
+	flag.StringVar(&c.FSRoot, "fs", defaultFSRoot, "Filesystem root directory for file saving")
 	flag.StringVar(&c.ConfigFile, "config", defaultConfig, "Config file name")
 	flag.StringVar(&c.ConfigFile, "c", defaultConfig, "Config file name")
 	flag.Parse()

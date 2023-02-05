@@ -32,8 +32,8 @@ type FileServer struct {
 }
 
 // NewFileServer returns a FileServer instance.
-func NewFileServer(ctx context.Context, fileStore db.Store) *FileServer {
-	fileContentSaver := NewDiskFileContentSaver("fs")
+func NewFileServer(ctx context.Context, fileStore db.Store, FSroot string) *FileServer {
+	fileContentSaver := NewDiskFileContentSaver(FSroot)
 	s := &FileServer{
 		fileStore,
 		fileContentSaver,
@@ -84,7 +84,7 @@ func (s *FileServer) CreateFile(stream pb.File_CreateFileServer) error {
 		if err != nil {
 			return err
 		}
-		log.Info().Msg("waiting to receive more filedata")
+		log.Debug().Msg("waiting to receive more filedata")
 
 		req, err := stream.Recv()
 		if err == io.EOF {
@@ -365,7 +365,7 @@ func (s *FileServer) DownloadFile(in *pb.DownloadFileRequest, stream pb.File_Dow
 	}
 
 	pathFS := fmt.Sprintf("%s/%s", account.Username, fileInfo.Filepath)
-	file, err := s.fileContentSaver.Find(ctx, fileInfo.Filename, pathFS)
+	file, err := s.fileContentSaver.LoadFile(ctx, fileInfo.Filename, pathFS)
 	if err != nil {
 		return logError(status.Errorf(codes.Internal, "cannot read file. Err :%s", err))
 	}
@@ -417,7 +417,7 @@ func (s *FileServer) ClearFileStorage(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			log.Info().Msg("Running garbage collector for deleted files.")
+			log.Debug().Msg("Running garbage collector for deleted files.")
 
 			deletedFiles, err := s.fileStore.GetDeletedFiles(ctx)
 			if err != nil {
@@ -454,19 +454,7 @@ func (s *FileServer) ClearFileStorage(ctx context.Context) {
 	}
 }
 
-// logError returns formatted error.
-func logError(err error) error {
-	if err != nil {
-		log.Error().Err(err).Msg("")
-	}
-	return err
-}
-
-func toUint64Ref(i int64) *uint64 {
-	ii := uint64(i)
-	return &ii
-}
-
+// CreateOrUpdateFileMD updates metadata for file.
 func (s *FileServer) CreateOrUpdateFileMD(ctx context.Context, metadataList []*pb.Metadata, fileID sql.NullInt64) ([]db.Metadatum, error) {
 	newMDList := []db.Metadatum{}
 	if len(metadataList) != 0 {
@@ -484,4 +472,17 @@ func (s *FileServer) CreateOrUpdateFileMD(ctx context.Context, metadataList []*p
 		}
 	}
 	return newMDList, nil
+}
+
+// logError returns formatted error.
+func logError(err error) error {
+	if err != nil {
+		log.Error().Err(err).Msg("")
+	}
+	return err
+}
+
+func toUint64Ref(i int64) *uint64 {
+	ii := uint64(i)
+	return &ii
 }

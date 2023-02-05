@@ -14,11 +14,6 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-const (
-	secretKey = "secret_key"
-	cypherKey = "VeryStrongKey"
-)
-
 var _ Server = (*GRPCServer)(nil)
 
 type GenericService struct {
@@ -84,13 +79,13 @@ func (s *GRPCServer) StartServer(ctx context.Context) {
 	if err != nil {
 		log.Fatal().Msg("cannot seed users")
 	}
-	jwtManager := NewJWTManager(secretKey, s.Cfg.TokenLifeTime)
+	jwtManager := NewJWTManager(s.Cfg.SecretKey, s.Cfg.TokenLifeTime)
 	authServer := NewAuthServer(s.store, jwtManager)
 	interceptor := NewAuthInterceptor(jwtManager, protectedMethods())
-	cryptoService := crypto.NewCryptoService(cypherKey)
+	cryptoService := crypto.NewCryptoService()
 
 	secretServer := NewSecretServer(s.store, cryptoService)
-	fileServer := NewFileServer(ctx, s.store)
+	fileServer := NewFileServer(ctx, s.store, s.Cfg.FSRoot)
 
 	serverOptions := []grpc.ServerOption{
 		grpc.UnaryInterceptor(interceptor.Unary()),

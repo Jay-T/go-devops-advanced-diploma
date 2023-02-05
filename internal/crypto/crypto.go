@@ -10,12 +10,10 @@ import (
 )
 
 type CryptoService struct {
-	key []byte
 }
 
-func NewCryptoService(keyString string) *CryptoService {
-	key := []byte("the-key-has-to-be-32-bytes-long!")
-	return &CryptoService{key}
+func NewCryptoService() *CryptoService {
+	return &CryptoService{}
 }
 
 func (cs *CryptoService) Encrypt(plaintext string, key []byte) (string, error) {
