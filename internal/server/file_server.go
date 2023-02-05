@@ -11,6 +11,7 @@ import (
 
 	db "github.com/Jay-T/go-devops-advanced-diploma/db/sqlc"
 	"github.com/Jay-T/go-devops-advanced-diploma/internal/pb"
+	"github.com/Jay-T/go-devops-advanced-diploma/internal/util"
 	"github.com/lib/pq"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
@@ -59,6 +60,7 @@ func (s *FileServer) CreateFile(stream pb.File_CreateFileServer) error {
 	}
 	filename := req.GetInfo().Filename
 	filepath := req.GetInfo().Filepath
+	metadataList := req.GetInfo().Metadata
 
 	arg := db.GetFileParams{
 		AccountID: account.ID,
@@ -133,11 +135,27 @@ func (s *FileServer) CreateFile(stream pb.File_CreateFileServer) error {
 		return logError(status.Errorf(codes.Internal, "failed to create secret: Err: %s", err))
 	}
 
+	if len(metadataList) != 0 {
+		for _, md := range metadataList {
+			argMD := db.CreateOrUpdateFileMetadataParams{
+				FileID: util.SQLInt64(newFile.ID),
+				Key:    md.Key,
+				Value:  md.Value,
+			}
+			_, err := s.fileStore.CreateOrUpdateFileMetadata(ctx, argMD)
+			if err != nil {
+				return logError(status.Errorf(codes.Internal, "failed to create file metadata: Err: %s", err))
+			}
+		}
+	}
+
 	res := &pb.CreateFileResponse{
 		Info: &pb.FileInfo{
-			Filename: newFile.Filename,
-			Filepath: newFile.Filepath,
-			Size:     toUint64Ref(newFile.Filesize),
+			Filename:  newFile.Filename,
+			Filepath:  newFile.Filepath,
+			Size:      toUint64Ref(newFile.Filesize),
+			Metadata:  metadataList,
+			CreatedAt: timestamppb.New(newFile.CreatedAt),
 		},
 	}
 
@@ -221,12 +239,19 @@ func (s *FileServer) UpdateFileName(ctx context.Context, in *pb.UpdateFileNameRe
 		return nil, logError(status.Errorf(codes.Internal, "cannot rename file in db. Err :%s", err))
 	}
 
+	metadataList := in.Info.GetMetadata()
+	newMDList, err := s.CreateOrUpdateFileMD(ctx, metadataList, util.SQLInt64(fileAfterUpdate.ID))
+	if err != nil {
+		return nil, err
+	}
+
 	resp := &pb.UpdateFileNameResponse{
 		Info: &pb.FileInfo{
 			Filename:  fileAfterUpdate.Filename,
 			Filepath:  fileAfterUpdate.Filepath,
 			Size:      toUint64Ref(fileAfterUpdate.Filesize),
 			CreatedAt: timestamppb.New(fileAfterUpdate.CreatedAt),
+			Metadata:  util.ConvertToPBMetadata(newMDList),
 		},
 	}
 
@@ -251,11 +276,17 @@ func (s *FileServer) ListFiles(ctx context.Context, in *emptypb.Empty) (*pb.List
 	}
 	var pbFiles []*pb.FileInfo
 	for _, file := range files {
+		metadata, err := s.fileStore.ListFileMetadata(ctx, util.SQLInt64(file.ID))
+		if err != nil && err != sql.ErrNoRows {
+			return nil, logError(status.Errorf(codes.Internal, "cannot collect secret metadata. Err: %s", err))
+		}
+
 		pbFiles = append(pbFiles, &pb.FileInfo{
 			Filepath:  file.Filepath,
 			Filename:  file.Filename,
 			Size:      toUint64Ref(file.Filesize),
 			CreatedAt: timestamppb.New(file.CreatedAt),
+			Metadata:  util.ConvertToPBMetadata(metadata),
 		})
 	}
 
@@ -287,11 +318,17 @@ func (s *FileServer) GetFileInfo(ctx context.Context, in *pb.GetFileInfoRequest)
 		return nil, logError(status.Errorf(codes.Internal, "cannot get file info from db. Err :%s", err))
 	}
 
+	metadata, err := s.fileStore.ListFileMetadata(ctx, util.SQLInt64(file.ID))
+	if err != nil && err != sql.ErrNoRows {
+		return nil, logError(status.Errorf(codes.Internal, "cannot collect file metadata. Err: %s", err))
+	}
+
 	fileInfo := &pb.FileInfo{
 		Filename:  file.Filename,
 		Filepath:  file.Filepath,
 		Size:      toUint64Ref(file.Filesize),
 		CreatedAt: timestamppb.New(file.CreatedAt),
+		Metadata:  util.ConvertToPBMetadata(metadata),
 	}
 
 	resp := &pb.GetFileInfoResponse{
@@ -395,6 +432,12 @@ func (s *FileServer) ClearFileStorage(ctx context.Context) {
 					continue
 				}
 
+				err = s.fileStore.DeleteAllFileMetadata(ctx, util.SQLInt64(file.ID))
+				if err != nil {
+					logError(status.Errorf(codes.Internal, "cannot delete file metadata: Err: %s", err))
+					continue
+				}
+
 				err = s.fileStore.DeletedFileById(ctx, file.ID)
 				if err != nil {
 					log.Error().Msgf("could not delete file with ID '%d' from db", file.ID)
@@ -422,4 +465,23 @@ func logError(err error) error {
 func toUint64Ref(i int64) *uint64 {
 	ii := uint64(i)
 	return &ii
+}
+
+func (s *FileServer) CreateOrUpdateFileMD(ctx context.Context, metadataList []*pb.Metadata, fileID sql.NullInt64) ([]db.Metadatum, error) {
+	newMDList := []db.Metadatum{}
+	if len(metadataList) != 0 {
+		for _, md := range metadataList {
+			argMD := db.CreateOrUpdateFileMetadataParams{
+				FileID: fileID,
+				Key:    md.Key,
+				Value:  md.Value,
+			}
+			newMD, err := s.fileStore.CreateOrUpdateFileMetadata(ctx, argMD)
+			if err != nil {
+				return nil, logError(status.Errorf(codes.Internal, "failed to create or update file metadata: Err: %s", err))
+			}
+			newMDList = append(newMDList, newMD)
+		}
+	}
+	return newMDList, nil
 }
