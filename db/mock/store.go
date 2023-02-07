@@ -6,6 +6,7 @@ package mockdb
 
 import (
 	context "context"
+	sql "database/sql"
 	reflect "reflect"
 
 	db "github.com/Jay-T/go-devops-advanced-diploma/db/sqlc"
@@ -94,6 +95,36 @@ func (mr *MockStoreMockRecorder) CreateFileTx(arg0, arg1, arg2 interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateFileTx", reflect.TypeOf((*MockStore)(nil).CreateFileTx), arg0, arg1, arg2)
 }
 
+// CreateOrUpdateFileMetadata mocks base method.
+func (m *MockStore) CreateOrUpdateFileMetadata(arg0 context.Context, arg1 db.CreateOrUpdateFileMetadataParams) (db.Metadatum, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateOrUpdateFileMetadata", arg0, arg1)
+	ret0, _ := ret[0].(db.Metadatum)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateOrUpdateFileMetadata indicates an expected call of CreateOrUpdateFileMetadata.
+func (mr *MockStoreMockRecorder) CreateOrUpdateFileMetadata(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrUpdateFileMetadata", reflect.TypeOf((*MockStore)(nil).CreateOrUpdateFileMetadata), arg0, arg1)
+}
+
+// CreateOrUpdateSecretMetadata mocks base method.
+func (m *MockStore) CreateOrUpdateSecretMetadata(arg0 context.Context, arg1 db.CreateOrUpdateSecretMetadataParams) (db.Metadatum, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateOrUpdateSecretMetadata", arg0, arg1)
+	ret0, _ := ret[0].(db.Metadatum)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateOrUpdateSecretMetadata indicates an expected call of CreateOrUpdateSecretMetadata.
+func (mr *MockStoreMockRecorder) CreateOrUpdateSecretMetadata(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrUpdateSecretMetadata", reflect.TypeOf((*MockStore)(nil).CreateOrUpdateSecretMetadata), arg0, arg1)
+}
+
 // CreateSecret mocks base method.
 func (m *MockStore) CreateSecret(arg0 context.Context, arg1 db.CreateSecretParams) (db.Secret, error) {
 	m.ctrl.T.Helper()
@@ -107,21 +138,6 @@ func (m *MockStore) CreateSecret(arg0 context.Context, arg1 db.CreateSecretParam
 func (mr *MockStoreMockRecorder) CreateSecret(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSecret", reflect.TypeOf((*MockStore)(nil).CreateSecret), arg0, arg1)
-}
-
-// CreateSecretMetadata mocks base method.
-func (m *MockStore) CreateSecretMetadata(arg0 context.Context, arg1 db.CreateSecretMetadataParams) (db.Metadatum, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateSecretMetadata", arg0, arg1)
-	ret0, _ := ret[0].(db.Metadatum)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateSecretMetadata indicates an expected call of CreateSecretMetadata.
-func (mr *MockStoreMockRecorder) CreateSecretMetadata(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSecretMetadata", reflect.TypeOf((*MockStore)(nil).CreateSecretMetadata), arg0, arg1)
 }
 
 // DeleteAccount mocks base method.
@@ -138,8 +154,22 @@ func (mr *MockStoreMockRecorder) DeleteAccount(arg0, arg1 interface{}) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAccount", reflect.TypeOf((*MockStore)(nil).DeleteAccount), arg0, arg1)
 }
 
+// DeleteAllFileMetadata mocks base method.
+func (m *MockStore) DeleteAllFileMetadata(arg0 context.Context, arg1 sql.NullInt64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteAllFileMetadata", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteAllFileMetadata indicates an expected call of DeleteAllFileMetadata.
+func (mr *MockStoreMockRecorder) DeleteAllFileMetadata(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAllFileMetadata", reflect.TypeOf((*MockStore)(nil).DeleteAllFileMetadata), arg0, arg1)
+}
+
 // DeleteAllSecretMetadata mocks base method.
-func (m *MockStore) DeleteAllSecretMetadata(arg0 context.Context, arg1 db.DeleteAllSecretMetadataParams) error {
+func (m *MockStore) DeleteAllSecretMetadata(arg0 context.Context, arg1 sql.NullInt64) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteAllSecretMetadata", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -164,6 +194,20 @@ func (m *MockStore) DeleteFile(arg0 context.Context, arg1 db.DeleteFileParams) e
 func (mr *MockStoreMockRecorder) DeleteFile(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFile", reflect.TypeOf((*MockStore)(nil).DeleteFile), arg0, arg1)
+}
+
+// DeleteOneFileMetadata mocks base method.
+func (m *MockStore) DeleteOneFileMetadata(arg0 context.Context, arg1 db.DeleteOneFileMetadataParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteOneFileMetadata", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteOneFileMetadata indicates an expected call of DeleteOneFileMetadata.
+func (mr *MockStoreMockRecorder) DeleteOneFileMetadata(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOneFileMetadata", reflect.TypeOf((*MockStore)(nil).DeleteOneFileMetadata), arg0, arg1)
 }
 
 // DeleteOneSecretMetadata mocks base method.
@@ -194,6 +238,20 @@ func (mr *MockStoreMockRecorder) DeleteSecret(arg0, arg1 interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSecret", reflect.TypeOf((*MockStore)(nil).DeleteSecret), arg0, arg1)
 }
 
+// DeletedFileById mocks base method.
+func (m *MockStore) DeletedFileById(arg0 context.Context, arg1 int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeletedFileById", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeletedFileById indicates an expected call of DeletedFileById.
+func (mr *MockStoreMockRecorder) DeletedFileById(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletedFileById", reflect.TypeOf((*MockStore)(nil).DeletedFileById), arg0, arg1)
+}
+
 // GetAccount mocks base method.
 func (m *MockStore) GetAccount(arg0 context.Context, arg1 string) (db.Account, error) {
 	m.ctrl.T.Helper()
@@ -207,6 +265,21 @@ func (m *MockStore) GetAccount(arg0 context.Context, arg1 string) (db.Account, e
 func (mr *MockStoreMockRecorder) GetAccount(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccount", reflect.TypeOf((*MockStore)(nil).GetAccount), arg0, arg1)
+}
+
+// GetDeletedFiles mocks base method.
+func (m *MockStore) GetDeletedFiles(arg0 context.Context) ([]db.GetDeletedFilesRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDeletedFiles", arg0)
+	ret0, _ := ret[0].([]db.GetDeletedFilesRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDeletedFiles indicates an expected call of GetDeletedFiles.
+func (mr *MockStoreMockRecorder) GetDeletedFiles(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeletedFiles", reflect.TypeOf((*MockStore)(nil).GetDeletedFiles), arg0)
 }
 
 // GetFile mocks base method.
@@ -239,6 +312,21 @@ func (mr *MockStoreMockRecorder) GetSecret(arg0, arg1 interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSecret", reflect.TypeOf((*MockStore)(nil).GetSecret), arg0, arg1)
 }
 
+// ListFileMetadata mocks base method.
+func (m *MockStore) ListFileMetadata(arg0 context.Context, arg1 sql.NullInt64) ([]db.Metadatum, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListFileMetadata", arg0, arg1)
+	ret0, _ := ret[0].([]db.Metadatum)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListFileMetadata indicates an expected call of ListFileMetadata.
+func (mr *MockStoreMockRecorder) ListFileMetadata(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFileMetadata", reflect.TypeOf((*MockStore)(nil).ListFileMetadata), arg0, arg1)
+}
+
 // ListFiles mocks base method.
 func (m *MockStore) ListFiles(arg0 context.Context, arg1 int64) ([]db.File, error) {
 	m.ctrl.T.Helper()
@@ -255,7 +343,7 @@ func (mr *MockStoreMockRecorder) ListFiles(arg0, arg1 interface{}) *gomock.Call 
 }
 
 // ListSecretMetadata mocks base method.
-func (m *MockStore) ListSecretMetadata(arg0 context.Context, arg1 db.ListSecretMetadataParams) ([]db.Metadatum, error) {
+func (m *MockStore) ListSecretMetadata(arg0 context.Context, arg1 sql.NullInt64) ([]db.Metadatum, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListSecretMetadata", arg0, arg1)
 	ret0, _ := ret[0].([]db.Metadatum)
@@ -284,44 +372,32 @@ func (mr *MockStoreMockRecorder) ListSecrets(arg0, arg1 interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSecrets", reflect.TypeOf((*MockStore)(nil).ListSecrets), arg0, arg1)
 }
 
-// UpdateFilePath mocks base method.
-func (m *MockStore) UpdateFilePath(arg0 context.Context, arg1 db.UpdateFilePathParams) error {
+// UpdateFileName mocks base method.
+func (m *MockStore) UpdateFileName(arg0 context.Context, arg1 db.UpdateFileNameParams) (db.File, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateFilePath", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "UpdateFileName", arg0, arg1)
+	ret0, _ := ret[0].(db.File)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// UpdateFilePath indicates an expected call of UpdateFilePath.
-func (mr *MockStoreMockRecorder) UpdateFilePath(arg0, arg1 interface{}) *gomock.Call {
+// UpdateFileName indicates an expected call of UpdateFileName.
+func (mr *MockStoreMockRecorder) UpdateFileName(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFilePath", reflect.TypeOf((*MockStore)(nil).UpdateFilePath), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFileName", reflect.TypeOf((*MockStore)(nil).UpdateFileName), arg0, arg1)
 }
 
 // UpdateSecret mocks base method.
-func (m *MockStore) UpdateSecret(arg0 context.Context, arg1 db.UpdateSecretParams) error {
+func (m *MockStore) UpdateSecret(arg0 context.Context, arg1 db.UpdateSecretParams) (db.Secret, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateSecret", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(db.Secret)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // UpdateSecret indicates an expected call of UpdateSecret.
 func (mr *MockStoreMockRecorder) UpdateSecret(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateSecret", reflect.TypeOf((*MockStore)(nil).UpdateSecret), arg0, arg1)
-}
-
-// UpdateSecretMetadata mocks base method.
-func (m *MockStore) UpdateSecretMetadata(arg0 context.Context, arg1 db.UpdateSecretMetadataParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateSecretMetadata", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateSecretMetadata indicates an expected call of UpdateSecretMetadata.
-func (mr *MockStoreMockRecorder) UpdateSecretMetadata(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateSecretMetadata", reflect.TypeOf((*MockStore)(nil).UpdateSecretMetadata), arg0, arg1)
 }

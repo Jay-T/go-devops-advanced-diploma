@@ -17,10 +17,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-const (
-	typeSecret string = "secret"
-)
-
 // getUsernameFromContext extracts username from incoming metadata.
 func getUsernameFromContext(ctx context.Context) (string, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
