@@ -8,7 +8,6 @@ import (
 	db "github.com/Jay-T/go-devops-advanced-diploma/db/sqlc"
 	"github.com/Jay-T/go-devops-advanced-diploma/internal/crypto"
 	"github.com/Jay-T/go-devops-advanced-diploma/internal/pb"
-	"github.com/Jay-T/go-devops-advanced-diploma/internal/util"
 	"github.com/lib/pq"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
@@ -85,7 +84,7 @@ func (s *SecretServer) CreateSecret(ctx context.Context, in *pb.CreateSecretRequ
 	if len(metadataList) != 0 {
 		for _, md := range metadataList {
 			argMD := db.CreateOrUpdateSecretMetadataParams{
-				SecretID: util.SQLInt64(secret.ID),
+				SecretID: SQLInt64(secret.ID),
 				Key:      md.Key,
 				Value:    md.Value,
 			}
@@ -130,7 +129,7 @@ func (s *SecretServer) DeleteSecret(ctx context.Context, in *pb.DeleteSecretRequ
 		return nil, logError(status.Errorf(codes.Internal, "cannot get secret: Err: %s", err))
 	}
 
-	err = s.secretStore.DeleteAllSecretMetadata(ctx, util.SQLInt64(secret.ID))
+	err = s.secretStore.DeleteAllSecretMetadata(ctx, SQLInt64(secret.ID))
 	if err != nil {
 		return nil, logError(status.Errorf(codes.Internal, "cannot delete secret metadata: Err: %s", err))
 	}
@@ -173,7 +172,7 @@ func (s *SecretServer) GetSecret(ctx context.Context, in *pb.GetSecretRequest) (
 		return nil, logError(status.Errorf(codes.Internal, "cannot get secret: Err: %s", err))
 	}
 
-	metadata, err := s.secretStore.ListSecretMetadata(ctx, util.SQLInt64(secret.ID))
+	metadata, err := s.secretStore.ListSecretMetadata(ctx, SQLInt64(secret.ID))
 	if err != nil && err != sql.ErrNoRows {
 		return nil, logError(status.Errorf(codes.Internal, "cannot collect secret metadata. Err: %s", err))
 	}
@@ -188,7 +187,7 @@ func (s *SecretServer) GetSecret(ctx context.Context, in *pb.GetSecretRequest) (
 	secretMSG := &pb.SecretMessage{
 		Key:       secret.Key,
 		Value:     decipher,
-		Metadata:  util.ConvertToPBMetadata(metadata),
+		Metadata:  ConvertToPBMetadata(metadata),
 		CreatedAt: timestamppb.New(secret.CreatedAt),
 	}
 
@@ -226,7 +225,7 @@ func (s *SecretServer) ListSecret(ctx context.Context, in *pb.ListSecretRequest)
 			return nil, logError(status.Errorf(codes.Internal, "cannot decrypt the secret. Err: %s", err))
 		}
 
-		metadata, err := s.secretStore.ListSecretMetadata(ctx, util.SQLInt64(i.ID))
+		metadata, err := s.secretStore.ListSecretMetadata(ctx, SQLInt64(i.ID))
 		if err != nil && err != sql.ErrNoRows {
 			return nil, logError(status.Errorf(codes.Internal, "cannot collect secret metadata. Err: %s", err))
 		}
@@ -234,7 +233,7 @@ func (s *SecretServer) ListSecret(ctx context.Context, in *pb.ListSecretRequest)
 		secretsList = append(secretsList, &pb.SecretMessage{
 			Key:       i.Key,
 			Value:     decipher,
-			Metadata:  util.ConvertToPBMetadata(metadata),
+			Metadata:  ConvertToPBMetadata(metadata),
 			CreatedAt: timestamppb.New(i.CreatedAt),
 		})
 	}
@@ -275,7 +274,7 @@ func (s *SecretServer) UpdateSecret(ctx context.Context, in *pb.UpdateSecretRequ
 	}
 
 	metadataList := in.Data.GetMetadata()
-	newMDList, err := s.CreateOrUpdateSecretMD(ctx, metadataList, util.SQLInt64(secret.ID))
+	newMDList, err := s.CreateOrUpdateSecretMD(ctx, metadataList, SQLInt64(secret.ID))
 	if err != nil {
 		return nil, err
 	}
@@ -284,7 +283,7 @@ func (s *SecretServer) UpdateSecret(ctx context.Context, in *pb.UpdateSecretRequ
 		Data: &pb.SecretMessage{
 			Key:       in.Data.Key,
 			Value:     in.Data.Value,
-			Metadata:  util.ConvertToPBMetadata(newMDList),
+			Metadata:  ConvertToPBMetadata(newMDList),
 			CreatedAt: timestamppb.New(secret.CreatedAt),
 		},
 	}, nil

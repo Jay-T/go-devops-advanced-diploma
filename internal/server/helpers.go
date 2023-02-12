@@ -1,8 +1,9 @@
-package db
+package server
 
 import (
 	"database/sql"
 
+	db "github.com/Jay-T/go-devops-advanced-diploma/db/sqlc"
 	"github.com/Jay-T/go-devops-advanced-diploma/internal/pb"
 )
 
@@ -13,7 +14,7 @@ func SQLInt64(i int64) sql.NullInt64 {
 	}
 }
 
-func ConvertToPBMetadata(metadata []Metadatum) []*pb.Metadata {
+func ConvertToPBMetadata(metadata []db.Metadatum) []*pb.Metadata {
 	pbMetadata := []*pb.Metadata{}
 	for _, md := range metadata {
 		pbMetadata = append(pbMetadata, &pb.Metadata{

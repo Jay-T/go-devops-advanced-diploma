@@ -11,7 +11,6 @@ import (
 
 	db "github.com/Jay-T/go-devops-advanced-diploma/db/sqlc"
 	"github.com/Jay-T/go-devops-advanced-diploma/internal/pb"
-	"github.com/Jay-T/go-devops-advanced-diploma/internal/util"
 	"github.com/lib/pq"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
@@ -138,7 +137,7 @@ func (s *FileServer) CreateFile(stream pb.File_CreateFileServer) error {
 	if len(metadataList) != 0 {
 		for _, md := range metadataList {
 			argMD := db.CreateOrUpdateFileMetadataParams{
-				FileID: util.SQLInt64(newFile.ID),
+				FileID: SQLInt64(newFile.ID),
 				Key:    md.Key,
 				Value:  md.Value,
 			}
@@ -240,7 +239,7 @@ func (s *FileServer) UpdateFileName(ctx context.Context, in *pb.UpdateFileNameRe
 	}
 
 	metadataList := in.Info.GetMetadata()
-	newMDList, err := s.CreateOrUpdateFileMD(ctx, metadataList, util.SQLInt64(fileAfterUpdate.ID))
+	newMDList, err := s.CreateOrUpdateFileMD(ctx, metadataList, SQLInt64(fileAfterUpdate.ID))
 	if err != nil {
 		return nil, err
 	}
@@ -251,7 +250,7 @@ func (s *FileServer) UpdateFileName(ctx context.Context, in *pb.UpdateFileNameRe
 			Filepath:  fileAfterUpdate.Filepath,
 			Size:      toUint64Ref(fileAfterUpdate.Filesize),
 			CreatedAt: timestamppb.New(fileAfterUpdate.CreatedAt),
-			Metadata:  util.ConvertToPBMetadata(newMDList),
+			Metadata:  ConvertToPBMetadata(newMDList),
 		},
 	}
 
@@ -276,7 +275,7 @@ func (s *FileServer) ListFiles(ctx context.Context, in *emptypb.Empty) (*pb.List
 	}
 	var pbFiles []*pb.FileInfo
 	for _, file := range files {
-		metadata, err := s.fileStore.ListFileMetadata(ctx, util.SQLInt64(file.ID))
+		metadata, err := s.fileStore.ListFileMetadata(ctx, SQLInt64(file.ID))
 		if err != nil && err != sql.ErrNoRows {
 			return nil, logError(status.Errorf(codes.Internal, "cannot collect secret metadata. Err: %s", err))
 		}
@@ -286,7 +285,7 @@ func (s *FileServer) ListFiles(ctx context.Context, in *emptypb.Empty) (*pb.List
 			Filename:  file.Filename,
 			Size:      toUint64Ref(file.Filesize),
 			CreatedAt: timestamppb.New(file.CreatedAt),
-			Metadata:  util.ConvertToPBMetadata(metadata),
+			Metadata:  ConvertToPBMetadata(metadata),
 		})
 	}
 
@@ -318,7 +317,7 @@ func (s *FileServer) GetFileInfo(ctx context.Context, in *pb.GetFileInfoRequest)
 		return nil, logError(status.Errorf(codes.Internal, "cannot get file info from db. Err :%s", err))
 	}
 
-	metadata, err := s.fileStore.ListFileMetadata(ctx, util.SQLInt64(file.ID))
+	metadata, err := s.fileStore.ListFileMetadata(ctx, SQLInt64(file.ID))
 	if err != nil && err != sql.ErrNoRows {
 		return nil, logError(status.Errorf(codes.Internal, "cannot collect file metadata. Err: %s", err))
 	}
@@ -328,7 +327,7 @@ func (s *FileServer) GetFileInfo(ctx context.Context, in *pb.GetFileInfoRequest)
 		Filepath:  file.Filepath,
 		Size:      toUint64Ref(file.Filesize),
 		CreatedAt: timestamppb.New(file.CreatedAt),
-		Metadata:  util.ConvertToPBMetadata(metadata),
+		Metadata:  ConvertToPBMetadata(metadata),
 	}
 
 	resp := &pb.GetFileInfoResponse{
@@ -432,7 +431,7 @@ func (s *FileServer) ClearFileStorage(ctx context.Context) {
 					continue
 				}
 
-				err = s.fileStore.DeleteAllFileMetadata(ctx, util.SQLInt64(file.ID))
+				err = s.fileStore.DeleteAllFileMetadata(ctx, SQLInt64(file.ID))
 				if err != nil {
 					logError(status.Errorf(codes.Internal, "cannot delete file metadata: Err: %s", err))
 					continue
