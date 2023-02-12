@@ -3,6 +3,7 @@ package client
 type Config struct {
 	Host      string
 	Masterkey string
+	Tokenfile string
 }
 
 func NewConfig() (*Config, error) {

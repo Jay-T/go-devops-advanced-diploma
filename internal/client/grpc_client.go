@@ -2,6 +2,8 @@ package client
 
 import (
 	"io/ioutil"
+	"os"
+	"path/filepath"
 
 	pb "github.com/Jay-T/go-devops-advanced-diploma/internal/pb"
 	"github.com/rs/zerolog/log"
@@ -46,7 +48,7 @@ func NewGRPCAgent(cfg *Config) (*GRPCAgent, error) {
 	if err != nil {
 		return nil, err
 	}
-	authClient := NewAuthClient(cc1)
+	authClient := NewAuthClient(cc1, c.Config.Tokenfile)
 	authInterceptor, err := NewAuthInterceptor(authClient, protectedMethods())
 	if err != nil {
 		log.Err(err).Msgf("error during authInterceptor initialization.")
@@ -79,5 +81,9 @@ func NewGRPCAgent(cfg *Config) (*GRPCAgent, error) {
 
 func (ga *GRPCAgent) SaveToken(token string) error {
 	ga.token = token
-	return ioutil.WriteFile(".token", []byte(token), 0600)
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(filepath.Join(home, ga.Config.Tokenfile), []byte(token), 0600)
 }
