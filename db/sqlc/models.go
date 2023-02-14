@@ -5,6 +5,7 @@
 package db
 
 import (
+	"database/sql"
 	"time"
 )
 
@@ -17,34 +18,27 @@ type Account struct {
 }
 
 type File struct {
-	ID        int64  `json:"id"`
-	AccountID int64  `json:"account_id"`
-	Filename  string `json:"filename"`
-	Filepath  string `json:"filepath"`
-	// file ready or not for listing
-	Ready     bool      `json:"ready"`
+	ID        int64     `json:"id"`
+	AccountID int64     `json:"account_id"`
+	Filename  string    `json:"filename"`
+	Filepath  string    `json:"filepath"`
+	Filesize  int64     `json:"filesize"`
+	Deleted   bool      `json:"deleted"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
-type FilesMetadatum struct {
-	ID        int64     `json:"id"`
-	FileID    int64     `json:"file_id"`
-	Key       string    `json:"key"`
-	Value     string    `json:"value"`
-	CreatedAt time.Time `json:"created_at"`
+type Metadatum struct {
+	ID        int64         `json:"id"`
+	SecretID  sql.NullInt64 `json:"secret_id"`
+	FileID    sql.NullInt64 `json:"file_id"`
+	Key       string        `json:"key"`
+	Value     string        `json:"value"`
+	CreatedAt time.Time     `json:"created_at"`
 }
 
 type Secret struct {
 	ID        int64     `json:"id"`
 	AccountID int64     `json:"account_id"`
-	Key       string    `json:"key"`
-	Value     string    `json:"value"`
-	CreatedAt time.Time `json:"created_at"`
-}
-
-type SecretsMetadatum struct {
-	ID        int64     `json:"id"`
-	SecretID  int64     `json:"secret_id"`
 	Key       string    `json:"key"`
 	Value     string    `json:"value"`
 	CreatedAt time.Time `json:"created_at"`

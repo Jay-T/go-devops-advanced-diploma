@@ -11,7 +11,23 @@ import (
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+// findAccount gets account info from Accounts table.
+func findAccount(ctx context.Context, s db.Store) (db.Account, error) {
+	username, err := getUsernameFromContext(ctx)
+	if err != nil {
+		return db.Account{}, err
+	}
+
+	account, err := s.GetAccount(ctx, username)
+	if err != nil {
+		return db.Account{}, logError(status.Errorf(codes.Internal, "cannot get account from db. Err :%s", err))
+	}
+
+	return account, nil
+}
 
 type AuthServer struct {
 	pb.UnimplementedAuthenticationServer
@@ -35,14 +51,15 @@ func (s *AuthServer) Login(ctx context.Context, in *pb.LoginRequest) (*pb.LoginR
 		return nil, status.Error(codes.NotFound, "username/password incorrect")
 	}
 
-	token, err := s.jwtManager.GeneratetToken(&acc)
+	token, expirationTime, err := s.jwtManager.GeneratetToken(&acc)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot generate access token")
 	}
 
 	return &pb.LoginResponse{
-		Login: acc.Username,
-		Token: token,
+		Login:                acc.Username,
+		Token:                token,
+		AccessTokenExpiresAt: timestamppb.New(expirationTime),
 	}, nil
 }
 
@@ -70,13 +87,14 @@ func (s *AuthServer) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.
 		return nil, status.Errorf(codes.Internal, "failed to create user: %s", err)
 	}
 
-	token, err := s.jwtManager.GeneratetToken(&newAcc)
+	token, expirationTime, err := s.jwtManager.GeneratetToken(&newAcc)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot generate access token")
 	}
 
 	return &pb.RegisterResponse{
-		Login: newAcc.Username,
-		Token: token,
+		Login:                newAcc.Username,
+		Token:                token,
+		AccessTokenExpiresAt: timestamppb.New(expirationTime),
 	}, nil
 }

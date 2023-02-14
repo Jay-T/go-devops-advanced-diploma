@@ -1,1 +1,6 @@
 fs/*
+.vscode/*
+.token
+
+cmd/client/config.yaml
+.vscode/launch.json

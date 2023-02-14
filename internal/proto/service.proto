@@ -4,6 +4,7 @@ package go_devops_advanced_diploma;
 
 option go_package = "github.com/Jay-T/go-devops-advanced-diploma/internal/pb";
 
+import "google/protobuf/empty.proto";
 import "auth.proto";
 import "secrets.proto";
 import "files.proto";
@@ -23,8 +24,9 @@ service Secret {
 
 service File {
     rpc CreateFile(stream CreateFileRequest) returns (CreateFileResponse) {}
-    rpc UpdateFile(stream UpdateFileRequest) returns (UpdateFileResponse) {}
+    rpc UpdateFileName(UpdateFileNameRequest) returns (UpdateFileNameResponse) {}
     rpc DeleteFile(DeleteFileRequest) returns (DeleteFileResponse) {}
-    rpc GetFile(GetFileRequest) returns (stream GetFileResponse) {}
-    rpc ListFile(ListFileRequest) returns (ListFileResponse) {}
+    rpc GetFileInfo(GetFileInfoRequest) returns (GetFileInfoResponse) {}
+    rpc DownloadFile(DownloadFileRequest) returns (stream DownloadFileResponse) {}
+    rpc ListFiles(google.protobuf.Empty) returns (ListFilesResponse) {}
 }

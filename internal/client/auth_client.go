@@ -1,37 +1,37 @@
 package client
 
 import (
-	"context"
-	"time"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 
 	"github.com/Jay-T/go-devops-advanced-diploma/internal/pb"
 	"google.golang.org/grpc"
 )
 
 type AuthClient struct {
-	service  pb.AuthenticationClient
-	username string
-	password string
+	service pb.AuthenticationClient
+	token   string
 }
 
-func NewAuthClient(cc *grpc.ClientConn, username string, password string) *AuthClient {
-	service := pb.NewAuthenticationClient(cc)
-	return &AuthClient{service, username, password}
+func NewAuthClient(cc *grpc.ClientConn, tokenfile string) *AuthClient {
+	ac := &AuthClient{}
+	ac.service = pb.NewAuthenticationClient(cc)
+	ac.LoadToken(tokenfile)
+	return ac
 }
 
-func (client *AuthClient) Login() (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	req := &pb.LoginRequest{
-		Login:    client.username,
-		Password: client.password,
-	}
-
-	res, err := client.service.Login(ctx, req)
+func (ac *AuthClient) LoadToken(tokenfile string) error {
+	home, err := os.UserHomeDir()
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	return res.GetToken(), nil
+	tokenBytes, err := ioutil.ReadFile(filepath.Join(home, tokenfile))
+	if err != nil {
+		return err
+	}
+
+	ac.token = string(tokenBytes)
+	return nil
 }

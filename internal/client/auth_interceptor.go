@@ -3,38 +3,30 @@ package client
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
 
-type AuthInteceptor struct {
+type AuthInterceptor struct {
 	authClient  *AuthClient
 	authMethods map[string]bool
-	token       string
 }
 
 func NewAuthInterceptor(
 	authClient *AuthClient,
 	authMethods map[string]bool,
-	refreshDuration time.Duration,
-) (*AuthInteceptor, error) {
-	interceptor := &AuthInteceptor{
+) (*AuthInterceptor, error) {
+	interceptor := &AuthInterceptor{
 		authClient:  authClient,
 		authMethods: authMethods,
-	}
-
-	err := interceptor.scheduleRefreshToken(refreshDuration)
-	if err != nil {
-		return nil, err
 	}
 
 	return interceptor, nil
 }
 
-func (interceptor *AuthInteceptor) Unary() grpc.UnaryClientInterceptor {
+func (interceptor *AuthInterceptor) Unary() grpc.UnaryClientInterceptor {
 	return func(
 		ctx context.Context,
 		method string,
@@ -53,41 +45,25 @@ func (interceptor *AuthInteceptor) Unary() grpc.UnaryClientInterceptor {
 	}
 }
 
-func (interceptor *AuthInteceptor) attachToken(ctx context.Context) context.Context {
-	return metadata.AppendToOutgoingContext(ctx, "authorization", interceptor.token)
-}
+func (interceptor *AuthInterceptor) Stream() grpc.StreamClientInterceptor {
+	return func(
+		ctx context.Context,
+		desc *grpc.StreamDesc,
+		cc *grpc.ClientConn,
+		method string,
+		streamer grpc.Streamer,
+		opts ...grpc.CallOption,
+	) (grpc.ClientStream, error) {
+		log.Printf("--> stream interceptor: %s", method)
 
-func (interceptor *AuthInteceptor) scheduleRefreshToken(refreshDuration time.Duration) error {
-	err := interceptor.refreshToken()
-	if err != nil {
-		return err
-	}
-
-	go func() {
-		wait := refreshDuration
-		for {
-			time.Sleep(wait)
-			err := interceptor.refreshToken()
-			if err != nil {
-				wait = time.Second
-			} else {
-				wait = refreshDuration
-			}
-
+		if interceptor.authMethods[method] {
+			return streamer(interceptor.attachToken(ctx), desc, cc, method, opts...)
 		}
-	}()
 
-	return nil
+		return streamer(ctx, desc, cc, method, opts...)
+	}
 }
 
-func (interceptor *AuthInteceptor) refreshToken() error {
-	token, err := interceptor.authClient.Login()
-	if err != nil {
-		return nil
-	}
-
-	interceptor.token = token
-	log.Info().Msg(fmt.Sprintf("token refreshed %v", token))
-
-	return nil
+func (interceptor *AuthInterceptor) attachToken(ctx context.Context) context.Context {
+	return metadata.AppendToOutgoingContext(ctx, "authorization", interceptor.authClient.token)
 }

@@ -3,11 +3,15 @@ syntax = "proto3";
 package go_devops_advanced_diploma;
 
 option go_package = "github.com/Jay-T/go-devops-advanced-diploma/internal/pb";
+import "google/protobuf/timestamp.proto";
+import "common_messages.proto";
 
 message FileInfo {
     string filepath = 1;
     string filename = 2;
-    optional bool ready = 3;
+    optional uint64 size = 3;
+    repeated Metadata metadata = 4;
+    optional google.protobuf.Timestamp created_at = 5;
 }
 
 message CreateFileRequest {
@@ -19,17 +23,15 @@ message CreateFileRequest {
 
 message CreateFileResponse {
     FileInfo info = 1;
-    uint32 size = 2;
 }
 
-message UpdateFileRequest {
-    oneof data {
-        FileInfo info = 1;
-        bytes chunk_data = 2;
-    };
+message UpdateFileNameRequest {
+    FileInfo info = 1;
+    string new_filename = 2;
+
 }
 
-message UpdateFileResponse {
+message UpdateFileNameResponse {
     FileInfo info = 1;
 }
 
@@ -41,21 +43,24 @@ message DeleteFileResponse {
     FileInfo info = 1;
 }
 
-message GetFileRequest {
-    FileInfo key = 1;
-}
-
-message GetFileResponse {
-    oneof data {
-        FileInfo info = 1;
-        bytes chunk_data = 2;
-    };
-}
-
-message ListFileRequest {
+message GetFileInfoRequest {
     FileInfo info = 1;
 }
 
-message ListFileResponse {
+message GetFileInfoResponse {
+    FileInfo info = 1;
+}
+
+message DownloadFileRequest {
+    FileInfo info = 1;
+}
+
+message DownloadFileResponse {
+    bytes chunk_data = 1;
+    int32 bytes_sent = 3;
+}
+
+
+message ListFilesResponse {
     repeated FileInfo info = 1;
 }

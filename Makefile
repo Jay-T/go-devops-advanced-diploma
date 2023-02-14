@@ -16,6 +16,9 @@ migratedown:
 sqlc:
 	sqlc generate
 
+mockgen:
+	mockgen -package mockdb -destination db/mock/store.go github.com/Jay-T/go-devops-advanced-diploma/db/sqlc Store
+
 test:
 	go test -v -cover ./...
 
@@ -30,4 +33,4 @@ server-run:
 client-run:
 	ENVIRONMENT=development go run ./cmd/client/.
 
-.PHONY: postgres createdb dropdb migrateup migratedown sqlc test client-run server-run
+.PHONY: postgres createdb dropdb migrateup migratedown sqlc mockgen test client-run server-run

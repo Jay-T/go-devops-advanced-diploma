@@ -25,7 +25,7 @@ type Claims struct {
 	Username string `json:"username"`
 }
 
-func (manager *JWTManager) GeneratetToken(acc *db.Account) (string, error) {
+func (manager *JWTManager) GeneratetToken(acc *db.Account) (string, time.Time, error) {
 	expirationTime := time.Now().Add(manager.tokenDuration)
 
 	claims := &Claims{
@@ -39,10 +39,10 @@ func (manager *JWTManager) GeneratetToken(acc *db.Account) (string, error) {
 	tokenString, err := token.SignedString([]byte(manager.secretKey))
 
 	if err != nil {
-		return "", fmt.Errorf("Could not generate token for user sign in request.")
+		return "", time.Time{}, fmt.Errorf("could not generate token for user sign in request")
 	}
 
-	return tokenString, nil
+	return tokenString, expirationTime, nil
 }
 
 func (manager *JWTManager) Verify(accessToken string) (*Claims, error) {
